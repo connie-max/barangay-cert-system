@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>My Requests - Barangay Certificate System</title>
+    </head>
+    <body>
+        <h2>My Certificate Requests</h2>
+
+        {% if requests %}
+        <ul>
+            {% for req in requests %}
+            <li>
+                {{ req.certificate_type }} — {{ req.status }} (requested {{ req.date_requested }})
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>You have no requests yet.</p>
+        {% endif %}
+
+        <p><a href="{% url 'request_certificate' %}">Request a New Certificate</a></p>
+        <p><a href="{% url 'home' %}">Back to Home</a></p>
+    </body>
+</html>

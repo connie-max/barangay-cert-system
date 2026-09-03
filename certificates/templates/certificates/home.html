@@ -12,5 +12,8 @@
             {% csrf_token %}
             <button type="submit">Log Out</button>
         </form>
+
+        <p><a href="{% url 'request_certificate' %}">Request a Certificate</a></p>
+        <p><a href="{% url 'my_requests' %}">View My Requests</a></p>
     </body>
 </html>

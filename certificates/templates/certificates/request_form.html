@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Request Certificate - Barangay Certificate System</title>
+    </head>
+    <body>
+        <h2>Request a Certificate</h2>
+
+        <form method="post">
+            {% csrf_token %} {{ form.as_p }}
+            <button type="submit">Submit Request</button>
+        </form>
+
+        <p><a href="{% url 'my_requests' %}">View My Requests</a></p>
+        <p><a href="{% url 'home' %}">Back to Home</a></p>
+    </body>
+</html>
