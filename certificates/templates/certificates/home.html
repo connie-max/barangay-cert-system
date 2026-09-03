@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Home - Barangay Certificate System</title>
+    </head>
+    <body>
+        <h2>Welcome, {{ user.username }}!</h2>
+        <p>You are logged in to the Barangay Certificate Request System.</p>
+
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">Log Out</button>
+        </form>
+    </body>
+</html>

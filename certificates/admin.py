@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import CertificateType, Resident, CertificateRequest
 
-# Register your models here.
+admin.site.register(CertificateType)
+admin.site.register(Resident)
+admin.site.register(CertificateRequest)
