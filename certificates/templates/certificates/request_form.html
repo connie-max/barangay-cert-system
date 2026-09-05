@@ -3,16 +3,148 @@
     <head>
         <meta charset="UTF-8" />
         <title>Request Certificate - Barangay Certificate System</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                background: linear-gradient(135deg, #1e3c72, #2a5298);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .card {
+                background: #ffffff;
+                padding: 40px 38px;
+                border-radius: 18px;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+                width: 100%;
+                max-width: 420px;
+            }
+
+            .icon-header {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #2a5298, #1e3c72);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 22px;
+                margin-bottom: 18px;
+            }
+
+            .card h1 {
+                font-size: 19px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 26px;
+            }
+
+            form p {
+                margin-bottom: 18px;
+            }
+
+            form label {
+                display: block;
+                font-size: 12px;
+                color: #444;
+                margin-bottom: 6px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+            }
+
+            form select,
+            form input {
+                width: 100%;
+                padding: 12px 14px;
+                border: 1.5px solid #e5e5e5;
+                border-radius: 10px;
+                font-size: 14px;
+                font-family: 'Poppins', sans-serif;
+                background: white;
+                transition: border-color 0.2s;
+            }
+
+            form select:focus,
+            form input:focus {
+                outline: none;
+                border-color: #2a5298;
+            }
+
+            button {
+                width: 100%;
+                padding: 13px;
+                background: linear-gradient(135deg, #2a5298, #1e3c72);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 15px;
+                font-weight: 600;
+                font-family: 'Poppins', sans-serif;
+                cursor: pointer;
+                margin-top: 8px;
+                transition: opacity 0.2s;
+            }
+
+            button:hover {
+                opacity: 0.9;
+            }
+
+            .links {
+                margin-top: 22px;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .links a {
+                color: #2a5298;
+                text-decoration: none;
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            .links a:hover {
+                text-decoration: underline;
+            }
+        </style>
     </head>
     <body>
-        <h2>Request a Certificate</h2>
+        <div class="card">
+            <div class="icon-header"><i class="fa-solid fa-file-circle-plus"></i></div>
+            <h1>Request a Certificate</h1>
 
-        <form method="post">
-            {% csrf_token %} {{ form.as_p }}
-            <button type="submit">Submit Request</button>
-        </form>
+            <form method="post">
+                {% csrf_token %} {{ form.as_p }}
+                <button type="submit">Submit Request</button>
+            </form>
 
-        <p><a href="{% url 'my_requests' %}">View My Requests</a></p>
-        <p><a href="{% url 'home' %}">Back to Home</a></p>
+            <div class="links">
+                <a href="{% url 'my_requests' %}"
+                    ><i class="fa-solid fa-list-check"></i> View My Requests</a
+                >
+                <a href="{% url 'home' %}"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+            </div>
+        </div>
     </body>
 </html>

@@ -2,18 +2,283 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Home - Barangay Certificate System</title>
+        <title>Dashboard - Barangay Certificate System</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                background: #f4f6fb;
+                min-height: 100vh;
+                color: #1a1a2e;
+            }
+
+            .topbar {
+                background: #ffffff;
+                padding: 18px 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            }
+
+            .topbar .brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 700;
+                font-size: 16px;
+                color: #2a5298;
+            }
+
+            .topbar .brand i {
+                font-size: 20px;
+            }
+
+            .topbar .user-info {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+            }
+
+            .topbar .user-info span {
+                font-size: 14px;
+                font-weight: 500;
+                color: #444;
+            }
+
+            .topbar form button {
+                background: #fdecea;
+                color: #b71c1c;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+                transition: background 0.2s;
+            }
+
+            .topbar form button:hover {
+                background: #f8d7da;
+            }
+
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }
+
+            .welcome {
+                margin-bottom: 32px;
+            }
+
+            .welcome h1 {
+                font-size: 26px;
+                font-weight: 700;
+                margin-bottom: 6px;
+            }
+
+            .welcome p {
+                color: #777;
+                font-size: 14px;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 18px;
+                margin-bottom: 36px;
+            }
+
+            .stat-card {
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 22px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+                transition: transform 0.2s;
+            }
+
+            .stat-card:hover {
+                transform: translateY(-3px);
+            }
+
+            .stat-card .icon {
+                width: 42px;
+                height: 42px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                margin-bottom: 14px;
+            }
+
+            .stat-card.total .icon {
+                background: #e8edfb;
+                color: #2a5298;
+            }
+            .stat-card.pending .icon {
+                background: #fff3cd;
+                color: #856404;
+            }
+            .stat-card.approved .icon {
+                background: #d4edda;
+                color: #155724;
+            }
+            .stat-card.rejected .icon {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+            .stat-card .number {
+                font-size: 28px;
+                font-weight: 700;
+            }
+
+            .stat-card .label {
+                font-size: 13px;
+                color: #888;
+                margin-top: 2px;
+            }
+
+            .actions-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+            }
+
+            .action-card {
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 28px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+                text-decoration: none;
+                color: inherit;
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+            }
+
+            .action-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            }
+
+            .action-card .icon-wrap {
+                width: 52px;
+                height: 52px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #2a5298, #1e3c72);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+
+            .action-card h3 {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+
+            .action-card p {
+                font-size: 13px;
+                color: #888;
+            }
+
+            @media (max-width: 700px) {
+                .stats-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                .actions-grid {
+                    grid-template-columns: 1fr;
+                }
+                .topbar {
+                    padding: 16px 20px;
+                }
+            }
+        </style>
     </head>
     <body>
-        <h2>Welcome, {{ user.username }}!</h2>
-        <p>You are logged in to the Barangay Certificate Request System.</p>
+        <div class="topbar">
+            <div class="brand">
+                <i class="fa-solid fa-landmark"></i>
+                Barangay Certificate System
+            </div>
+            <div class="user-info">
+                <span><i class="fa-solid fa-user-circle"></i> {{ user.username }}</span>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Log Out</button>
+                </form>
+            </div>
+        </div>
 
-        <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button type="submit">Log Out</button>
-        </form>
+        <div class="container">
+            <div class="welcome">
+                <h1>Welcome back, {{ user.username }} 👋</h1>
+                <p>Here's an overview of your certificate requests.</p>
+            </div>
 
-        <p><a href="{% url 'request_certificate' %}">Request a Certificate</a></p>
-        <p><a href="{% url 'my_requests' %}">View My Requests</a></p>
+            <div class="stats-grid">
+                <div class="stat-card total">
+                    <div class="icon"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="number">{{ total_requests }}</div>
+                    <div class="label">Total Requests</div>
+                </div>
+                <div class="stat-card pending">
+                    <div class="icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <div class="number">{{ pending_count }}</div>
+                    <div class="label">Pending</div>
+                </div>
+                <div class="stat-card approved">
+                    <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="number">{{ approved_count }}</div>
+                    <div class="label">Approved</div>
+                </div>
+                <div class="stat-card rejected">
+                    <div class="icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div class="number">{{ rejected_count }}</div>
+                    <div class="label">Rejected</div>
+                </div>
+            </div>
+
+            <div class="actions-grid">
+                <a href="{% url 'request_certificate' %}" class="action-card">
+                    <div class="icon-wrap"><i class="fa-solid fa-plus"></i></div>
+                    <div>
+                        <h3>Request a Certificate</h3>
+                        <p>Submit a new certificate request</p>
+                    </div>
+                </a>
+                <a href="{% url 'my_requests' %}" class="action-card">
+                    <div class="icon-wrap"><i class="fa-solid fa-list-check"></i></div>
+                    <div>
+                        <h3>View My Requests</h3>
+                        <p>Track the status of your requests</p>
+                    </div>
+                </a>
+            </div>
+        </div>
     </body>
 </html>

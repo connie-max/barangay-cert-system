@@ -3,23 +3,167 @@
     <head>
         <meta charset="UTF-8" />
         <title>My Requests - Barangay Certificate System</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                background: linear-gradient(135deg, #1e3c72, #2a5298);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .card {
+                background: #ffffff;
+                padding: 40px 38px;
+                border-radius: 18px;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+                width: 100%;
+                max-width: 480px;
+            }
+
+            .icon-header {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #2a5298, #1e3c72);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 22px;
+                margin-bottom: 18px;
+            }
+
+            .card h1 {
+                font-size: 19px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 24px;
+            }
+
+            .request-item {
+                background: #f7f9fc;
+                padding: 16px 18px;
+                border-radius: 12px;
+                margin-bottom: 12px;
+                border-left: 4px solid #2a5298;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .request-item .type {
+                font-weight: 600;
+                color: #1a1a2e;
+                font-size: 14px;
+            }
+
+            .request-item .meta {
+                font-size: 12px;
+                color: #999;
+                margin-top: 4px;
+            }
+
+            .status {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+            }
+
+            .status.pending {
+                background: #fff3cd;
+                color: #856404;
+            }
+            .status.approved {
+                background: #d4edda;
+                color: #155724;
+            }
+            .status.rejected {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+            .empty {
+                text-align: center;
+                color: #aaa;
+                font-size: 14px;
+                padding: 30px 0;
+            }
+
+            .empty i {
+                font-size: 32px;
+                display: block;
+                margin-bottom: 12px;
+                color: #ddd;
+            }
+
+            .links {
+                margin-top: 24px;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .links a {
+                color: #2a5298;
+                text-decoration: none;
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            .links a:hover {
+                text-decoration: underline;
+            }
+        </style>
     </head>
     <body>
-        <h2>My Certificate Requests</h2>
+        <div class="card">
+            <div class="icon-header"><i class="fa-solid fa-list-check"></i></div>
+            <h1>My Certificate Requests</h1>
 
-        {% if requests %}
-        <ul>
-            {% for req in requests %}
-            <li>
-                {{ req.certificate_type }} — {{ req.status }} (requested {{ req.date_requested }})
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p>You have no requests yet.</p>
-        {% endif %}
+            {% if requests %} {% for req in requests %}
+            <div class="request-item">
+                <div>
+                    <div class="type">{{ req.certificate_type }}</div>
+                    <div class="meta">Requested {{ req.date_requested|date:"M d, Y" }}</div>
+                </div>
+                <span class="status {{ req.status }}">{{ req.status }}</span>
+            </div>
+            {% endfor %} {% else %}
+            <div class="empty">
+                <i class="fa-solid fa-inbox"></i>
+                You have no requests yet.
+            </div>
+            {% endif %}
 
-        <p><a href="{% url 'request_certificate' %}">Request a New Certificate</a></p>
-        <p><a href="{% url 'home' %}">Back to Home</a></p>
+            <div class="links">
+                <a href="{% url 'request_certificate' %}"
+                    ><i class="fa-solid fa-plus"></i> Request a New Certificate</a
+                >
+                <a href="{% url 'home' %}"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+            </div>
+        </div>
     </body>
 </html>

@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', auth_views.LoginView.as_view(template_name='certificates/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('signup/', certificates_views.signup, name='signup'),
     path('', certificates_views.home, name='home'),
     path('request/', certificates_views.request_certificate, name='request_certificate'),
     path('my-requests/', certificates_views.my_requests, name='my_requests'),
