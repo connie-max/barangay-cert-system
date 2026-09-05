@@ -29,42 +29,89 @@
                 padding: 20px;
             }
 
-            .login-card {
+            .auth-wrapper {
                 background: #ffffff;
-                padding: 44px 38px;
-                border-radius: 18px;
+                border-radius: 20px;
                 box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
                 width: 100%;
-                max-width: 400px;
+                max-width: 980px;
+                display: flex;
+                overflow: hidden;
+                min-height: 640px;
             }
 
-            .logo {
-                width: 56px;
-                height: 56px;
-                border-radius: 14px;
+            .side-panel {
                 background: linear-gradient(135deg, #2a5298, #1e3c72);
+                color: white;
+                flex: 0 0 38%;
+                padding: 54px 40px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+
+            .side-panel .logo {
+                width: 68px;
+                height: 68px;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.15);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: white;
-                font-size: 24px;
-                margin: 0 auto 20px;
+                font-size: 30px;
+                margin-bottom: 26px;
             }
 
-            .login-card h1 {
-                font-size: 19px;
+            .side-panel h2 {
+                font-size: 26px;
+                font-weight: 700;
+                margin-bottom: 14px;
+            }
+
+            .side-panel p {
+                font-size: 15px;
+                opacity: 0.85;
+                line-height: 1.6;
+                margin-bottom: 30px;
+            }
+
+            .side-panel a {
+                display: inline-block;
+                padding: 13px 34px;
+                border: 1.5px solid rgba(255, 255, 255, 0.6);
+                border-radius: 9px;
+                color: white;
+                text-decoration: none;
+                font-size: 15px;
+                font-weight: 600;
+                transition: background 0.2s;
+            }
+
+            .side-panel a:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+            .form-panel {
+                flex: 1;
+                padding: 54px 48px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            .form-panel h1 {
+                font-size: 26px;
                 font-weight: 700;
                 color: #1a1a2e;
-                margin-bottom: 4px;
-                text-align: center;
+                margin-bottom: 6px;
             }
 
-            .login-card h2 {
-                font-size: 13px;
-                font-weight: 400;
+            .form-panel .subtitle {
+                font-size: 14px;
                 color: #999;
-                text-align: center;
-                margin-bottom: 30px;
+                margin-bottom: 32px;
             }
 
             .error-message {
@@ -80,7 +127,7 @@
             }
 
             .form-group {
-                margin-bottom: 18px;
+                margin-bottom: 20px;
             }
 
             label {
@@ -99,7 +146,7 @@
 
             .input-wrap i {
                 position: absolute;
-                left: 14px;
+                left: 15px;
                 top: 50%;
                 transform: translateY(-50%);
                 color: #aaa;
@@ -109,10 +156,10 @@
             input[type='text'],
             input[type='password'] {
                 width: 100%;
-                padding: 12px 14px 12px 38px;
+                padding: 13px 15px 13px 40px;
                 border: 1.5px solid #e5e5e5;
                 border-radius: 10px;
-                font-size: 14px;
+                font-size: 15px;
                 font-family: 'Poppins', sans-serif;
                 transition: border-color 0.2s;
             }
@@ -125,7 +172,7 @@
 
             button {
                 width: 100%;
-                padding: 13px;
+                padding: 14px;
                 background: linear-gradient(135deg, #2a5298, #1e3c72);
                 color: white;
                 border: none;
@@ -141,47 +188,62 @@
             button:hover {
                 opacity: 0.9;
             }
+
+            @media (max-width: 700px) {
+                .auth-wrapper {
+                    flex-direction: column;
+                    min-height: auto;
+                }
+                .side-panel {
+                    flex: none;
+                    padding: 34px;
+                }
+            }
         </style>
     </head>
     <body>
-        <div class="login-card">
-            <div class="logo"><i class="fa-solid fa-landmark"></i></div>
-            <h1>Barangay Certificate Request System</h1>
-            <h2>Sign in to continue</h2>
-
-            {% if form.errors %}
-            <div class="error-message">
-                <i class="fa-solid fa-circle-exclamation"></i> Invalid username or password. Please
-                try again.
+        <div class="auth-wrapper">
+            <div class="side-panel">
+                <div class="logo"><i class="fa-solid fa-landmark"></i></div>
+                <h2>Barangay Certificate System</h2>
+                <p>
+                    Request and track barangay certificates online clearance, residency, indigency,
+                    and more.
+                </p>
+                <a href="{% url 'signup' %}">Create Account</a>
             </div>
-            {% endif %}
 
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_username">Username</label>
-                    <div class="input-wrap">
-                        <i class="fa-solid fa-user"></i>
-                        <input type="text" name="username" id="id_username" />
-                    </div>
+            <div class="form-panel">
+                <h1>Welcome Back</h1>
+                <p class="subtitle">Sign in to continue to your dashboard</p>
+
+                {% if form.errors %}
+                <div class="error-message">
+                    <i class="fa-solid fa-circle-exclamation"></i> Invalid username or password.
+                    Please try again.
                 </div>
+                {% endif %}
 
-                <div class="form-group">
-                    <label for="id_password">Password</label>
-                    <div class="input-wrap">
-                        <i class="fa-solid fa-lock"></i>
-                        <input type="password" name="password" id="id_password" />
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_username">Username</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" name="username" id="id_username" />
+                        </div>
                     </div>
-                </div>
 
-                <button type="submit">Log In</button>
-            </form>
-            <div class="links" style="margin-top: 20px; text-align: center">
-                <a
-                    href="{% url 'signup' %}"
-                    style="color: #2a5298; text-decoration: none; font-size: 13px; font-weight: 500"
-                    >Don't have an account? Sign up</a
-                >
+                    <div class="form-group">
+                        <label for="id_password">Password</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" name="password" id="id_password" />
+                        </div>
+                    </div>
+
+                    <button type="submit">Log In</button>
+                </form>
             </div>
         </div>
     </body>
