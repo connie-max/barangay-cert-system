@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Manage Requests - Barangay Certificate System</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                background: #f4f6fb;
+                min-height: 100vh;
+            }
+
+            .topbar {
+                background: #ffffff;
+                padding: 18px 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            }
+
+            .topbar .brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 700;
+                font-size: 16px;
+                color: #2a5298;
+            }
+
+            .topbar a {
+                color: #2a5298;
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }
+
+            .container h1 {
+                font-size: 24px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 6px;
+            }
+
+            .container .subtitle {
+                font-size: 14px;
+                color: #888;
+                margin-bottom: 28px;
+            }
+
+            .request-card {
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 20px 24px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+                margin-bottom: 14px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .request-card .info .type {
+                font-weight: 600;
+                font-size: 15px;
+                color: #1a1a2e;
+            }
+
+            .request-card .info .meta {
+                font-size: 12px;
+                color: #999;
+                margin-top: 4px;
+            }
+
+            .request-card .actions {
+                display: flex;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 9px 18px;
+                border: none;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+                text-decoration: none;
+                display: inline-block;
+            }
+
+            .btn-approve {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            .btn-approve:hover {
+                background: #bfe5c6;
+            }
+
+            .btn-reject {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+            .btn-reject:hover {
+                background: #f3c1c6;
+            }
+
+            .empty {
+                text-align: center;
+                color: #aaa;
+                font-size: 14px;
+                padding: 60px 0;
+            }
+
+            .empty i {
+                font-size: 40px;
+                display: block;
+                margin-bottom: 14px;
+                color: #ddd;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="topbar">
+            <div class="brand">
+                <i class="fa-solid fa-landmark"></i> Barangay Certificate System
+            </div>
+            <a href="{% url 'home' %}">Back to Home</a>
+        </div>
+
+        <div class="container">
+            <h1>Manage Requests</h1>
+            <p class="subtitle">Review and process pending certificate requests</p>
+
+            {% if requests %} {% for req in requests %}
+            <div class="request-card">
+                <div class="info">
+                    <div class="type">{{ req.certificate_type }}</div>
+                    <div class="meta">
+                        Requested by {{ req.resident }} on {{ req.date_requested|date:"M d, Y" }}
+                    </div>
+                </div>
+                <div class="actions">
+                    <a
+                        href="{% url 'update_request_status' req.id 'approved' %}"
+                        class="btn btn-approve"
+                        >Approve</a
+                    >
+                    <a
+                        href="{% url 'update_request_status' req.id 'rejected' %}"
+                        class="btn btn-reject"
+                        >Reject</a
+                    >
+                </div>
+            </div>
+            {% endfor %} {% else %}
+            <div class="empty">
+                <i class="fa-solid fa-clipboard-check"></i>
+                No pending requests right now.
+            </div>
+            {% endif %}
+        </div>
+    </body>
+</html>

@@ -279,6 +279,27 @@
                     </div>
                 </a>
             </div>
+
+            {% if user.is_staff %}
+            <div style="margin-top: 18px">
+                <a
+                    href="{% url 'manage_requests' %}"
+                    class="action-card"
+                    style="border: 2px dashed #2a5298"
+                >
+                    <div
+                        class="icon-wrap"
+                        style="background: linear-gradient(135deg, #b71c1c, #7a1212)"
+                    >
+                        <i class="fa-solid fa-clipboard-list"></i>
+                    </div>
+                    <div>
+                        <h3>Manage Requests (Staff)</h3>
+                        <p>Approve or reject pending certificate requests</p>
+                    </div>
+                </a>
+            </div>
+            {% endif %}
         </div>
     </body>
 </html>

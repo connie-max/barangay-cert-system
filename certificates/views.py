@@ -1,5 +1,5 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from .forms import CertificateRequestForm, ResidentSignUpForm
 from .models import Resident, CertificateRequest
@@ -55,3 +55,18 @@ def signup(request):
         form = ResidentSignUpForm()
 
     return render(request, 'certificates/signup.html', {'form': form})
+
+def is_staff_user(user):
+    return user.is_staff
+
+@user_passes_test(is_staff_user)
+def manage_requests(request):
+    pending = CertificateRequest.objects.filter(status='pending')
+    return render(request, 'certificates/manage_requests.html', {'requests': pending})
+
+@user_passes_test(is_staff_user)
+def update_request_status(request, request_id, new_status):
+    cert_request = get_object_or_404(CertificateRequest, id=request_id)
+    cert_request.status = new_status
+    cert_request.save()
+    return redirect('manage_requests')

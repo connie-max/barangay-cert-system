@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from certificates import views as certificates_views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', auth_views.LoginView.as_view(template_name='certificates/login.html'), name='login'),
@@ -27,4 +28,6 @@ urlpatterns = [
     path('', certificates_views.home, name='home'),
     path('request/', certificates_views.request_certificate, name='request_certificate'),
     path('my-requests/', certificates_views.my_requests, name='my_requests'),
+    path('manage-requests/', certificates_views.manage_requests, name='manage_requests'),
+    path('manage-requests/<int:request_id>/<str:new_status>/', certificates_views.update_request_status, name='update_request_status'),
 ]
