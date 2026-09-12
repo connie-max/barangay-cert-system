@@ -319,6 +319,72 @@
                 opacity: 0.9;
             }
 
+            .request-item {
+                background: #f7f9fc;
+                padding: 16px 18px;
+                border-radius: 12px;
+                margin-bottom: 12px;
+                border-left: 4px solid #2a5298;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .request-item .type {
+                font-weight: 600;
+                color: #1a1a2e;
+                font-size: 14px;
+            }
+
+            .request-item .meta {
+                font-size: 12px;
+                color: #999;
+                margin-top: 4px;
+            }
+
+            .status {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+            }
+
+            .status.pending {
+                background: #fff3cd;
+                color: #856404;
+            }
+            .status.approved {
+                background: #d4edda;
+                color: #155724;
+            }
+            .status.rejected {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+            .empty {
+                text-align: center;
+                color: #aaa;
+                font-size: 14px;
+                padding: 30px 0;
+            }
+
+            .empty i {
+                font-size: 32px;
+                display: block;
+                margin-bottom: 12px;
+                color: #ddd;
+            }
+
+            .modal-scroll-body {
+                max-height: 60vh;
+                overflow-y: auto;
+                padding-right: 4px;
+            }
+
             @media (max-width: 700px) {
                 .stats-grid {
                     grid-template-columns: repeat(2, 1fr);
@@ -389,7 +455,7 @@
                         <p>Submit a new certificate request</p>
                     </div>
                 </a>
-                <a href="{% url 'my_requests' %}" class="action-card">
+                <a href="#" class="action-card" onclick="openMyRequestsModal(event)">
                     <div class="icon-wrap"><i class="fa-solid fa-list-check"></i></div>
                     <div>
                         <h3>View My Requests</h3>
@@ -434,6 +500,65 @@
                 </form>
             </div>
         </div>
+        {% endif %} {% if not user.is_staff %}
+        <div class="modal-overlay" id="myRequestsModalOverlay">
+            <div class="modal-sheet" style="max-width: 500px">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-list-check"></i> My Certificate Requests</h2>
+                    <button type="button" class="modal-close" onclick="closeMyRequestsModal()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-scroll-body">
+                    {% for req in my_requests_list %}
+                    <div class="request-item">
+                        <div>
+                            <div class="type">{{ req.certificate_type }}</div>
+                            <div class="meta">Requested {{ req.date_requested|date:"M d, Y" }}</div>
+                            {% if req.status == 'approved' %}
+                            <a
+                                href="{% url 'download_certificate' req.id %}"
+                                style="
+                                    font-size: 12px;
+                                    color: #2a5298;
+                                    font-weight: 600;
+                                    text-decoration: none;
+                                    display: inline-block;
+                                    margin-top: 6px;
+                                "
+                            >
+                                <i class="fa-solid fa-download"></i> Download Certificate
+                            </a>
+                            {% endif %} {% if req.status == 'pending' %}
+                            <a
+                                href="{% url 'cancel_request' req.id %}"
+                                onclick="
+                                    return confirm('Are you sure you want to cancel this request?')
+                                "
+                                style="
+                                    font-size: 12px;
+                                    color: #b71c1c;
+                                    font-weight: 600;
+                                    text-decoration: none;
+                                    display: inline-block;
+                                    margin-top: 6px;
+                                "
+                            >
+                                <i class="fa-solid fa-xmark"></i> Cancel Request
+                            </a>
+                            {% endif %}
+                        </div>
+                        <span class="status {{ req.status }}">{{ req.status }}</span>
+                    </div>
+                    {% empty %}
+                    <div class="empty">
+                        <i class="fa-solid fa-inbox"></i>
+                        No certificate requests yet.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
         {% endif %}
 
         <script>
@@ -446,13 +571,31 @@
                 document.getElementById('requestModalOverlay').classList.remove('active')
             }
 
-            // Close modal when clicking outside the sheet
+            function openMyRequestsModal(e) {
+                e.preventDefault()
+                document.getElementById('myRequestsModalOverlay').classList.add('active')
+            }
+
+            function closeMyRequestsModal() {
+                document.getElementById('myRequestsModalOverlay').classList.remove('active')
+            }
+
+            // Close modals when clicking outside the sheet
             document.addEventListener('DOMContentLoaded', function () {
-                const overlay = document.getElementById('requestModalOverlay')
-                if (overlay) {
-                    overlay.addEventListener('click', function (e) {
-                        if (e.target === overlay) {
+                const requestOverlay = document.getElementById('requestModalOverlay')
+                if (requestOverlay) {
+                    requestOverlay.addEventListener('click', function (e) {
+                        if (e.target === requestOverlay) {
                             closeRequestModal()
+                        }
+                    })
+                }
+
+                const myRequestsOverlay = document.getElementById('myRequestsModalOverlay')
+                if (myRequestsOverlay) {
+                    myRequestsOverlay.addEventListener('click', function (e) {
+                        if (e.target === myRequestsOverlay) {
+                            closeMyRequestsModal()
                         }
                     })
                 }

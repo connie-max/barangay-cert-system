@@ -23,6 +23,7 @@ def home(request):
         'approved_count': requests.filter(status='approved').count(),
         'rejected_count': requests.filter(status='rejected').count(),
         'form': CertificateRequestForm(),
+        'my_requests_list': requests,
     }
     return render(request, 'certificates/home.html', context)
 
