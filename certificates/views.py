@@ -9,14 +9,20 @@ from reportlab.pdfgen import canvas
 
 @login_required
 def home(request):
-    resident = Resident.objects.get(user=request.user)
-    requests = CertificateRequest.objects.filter(resident=resident)
+    if request.user.is_staff:
+        # Staff/admin see system-wide stats across all residents
+        requests = CertificateRequest.objects.all()
+    else:
+        # Residents see only their own stats
+        resident = Resident.objects.get(user=request.user)
+        requests = CertificateRequest.objects.filter(resident=resident)
 
     context = {
         'total_requests': requests.count(),
         'pending_count': requests.filter(status='pending').count(),
         'approved_count': requests.filter(status='approved').count(),
         'rejected_count': requests.filter(status='rejected').count(),
+        'form': CertificateRequestForm(),
     }
     return render(request, 'certificates/home.html', context)
 
@@ -41,6 +47,13 @@ def my_requests(request):
     resident = Resident.objects.get(user=request.user)
     requests = CertificateRequest.objects.filter(resident=resident)
     return render(request, 'certificates/my_requests.html', {'requests': requests})
+
+@login_required
+def cancel_request(request, request_id):
+    resident = Resident.objects.get(user=request.user)
+    cert_request = get_object_or_404(CertificateRequest, id=request_id, resident=resident, status='pending')
+    cert_request.delete()
+    return redirect('my_requests')
 
 def signup(request):
     if request.method == 'POST':

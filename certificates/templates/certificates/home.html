@@ -206,6 +206,119 @@
                 color: #888;
             }
 
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(10, 15, 30, 0.55);
+                z-index: 100;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-overlay.active {
+                display: flex;
+            }
+
+            .modal-sheet {
+                background: #ffffff;
+                width: 100%;
+                max-width: 460px;
+                border-radius: 18px;
+                padding: 32px 34px 28px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                transform: scale(0.95);
+                opacity: 0;
+                animation: popIn 0.2s ease-out forwards;
+            }
+
+            @keyframes popIn {
+                to {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            .modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 22px;
+            }
+
+            .modal-header h2 {
+                font-size: 18px;
+                font-weight: 700;
+            }
+
+            .modal-close {
+                background: #f4f6fb;
+                border: none;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 14px;
+                color: #555;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-close:hover {
+                background: #e8edfb;
+            }
+
+            .modal-sheet form p {
+                margin-bottom: 16px;
+            }
+
+            .modal-sheet form label {
+                display: block;
+                font-size: 12px;
+                color: #444;
+                margin-bottom: 6px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+            }
+
+            .modal-sheet form select,
+            .modal-sheet form input {
+                width: 100%;
+                padding: 12px 14px;
+                border: 1.5px solid #e5e5e5;
+                border-radius: 10px;
+                font-size: 14px;
+                font-family: 'Poppins', sans-serif;
+                background: white;
+            }
+
+            .modal-sheet form select:focus,
+            .modal-sheet form input:focus {
+                outline: none;
+                border-color: #2a5298;
+            }
+
+            .modal-submit {
+                width: 100%;
+                padding: 13px;
+                background: linear-gradient(135deg, #2a5298, #1e3c72);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 15px;
+                font-weight: 600;
+                font-family: 'Poppins', sans-serif;
+                cursor: pointer;
+                margin-top: 6px;
+                transition: opacity 0.2s;
+            }
+
+            .modal-submit:hover {
+                opacity: 0.9;
+            }
+
             @media (max-width: 700px) {
                 .stats-grid {
                     grid-template-columns: repeat(2, 1fr);
@@ -237,7 +350,11 @@
         <div class="container">
             <div class="welcome">
                 <h1>Welcome back, {{ user.username }} 👋</h1>
+                {% if user.is_staff %}
+                <p>Here's an overview of all certificate requests in the system.</p>
+                {% else %}
                 <p>Here's an overview of your certificate requests.</p>
+                {% endif %}
             </div>
 
             <div class="stats-grid">
@@ -263,8 +380,9 @@
                 </div>
             </div>
 
+            {% if not user.is_staff %}
             <div class="actions-grid">
-                <a href="{% url 'request_certificate' %}" class="action-card">
+                <a href="#" class="action-card" onclick="openRequestModal(event)">
                     <div class="icon-wrap"><i class="fa-solid fa-plus"></i></div>
                     <div>
                         <h3>Request a Certificate</h3>
@@ -279,8 +397,7 @@
                     </div>
                 </a>
             </div>
-
-            {% if user.is_staff %}
+            {% endif %} {% if user.is_staff %}
             <div style="margin-top: 18px">
                 <a
                     href="{% url 'manage_requests' %}"
@@ -301,5 +418,45 @@
             </div>
             {% endif %}
         </div>
+
+        {% if not user.is_staff %}
+        <div class="modal-overlay" id="requestModalOverlay">
+            <div class="modal-sheet">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-file-circle-plus"></i> Request a Certificate</h2>
+                    <button type="button" class="modal-close" onclick="closeRequestModal()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <form method="post" action="{% url 'request_certificate' %}">
+                    {% csrf_token %} {{ form.as_p }}
+                    <button type="submit" class="modal-submit">Submit Request</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <script>
+            function openRequestModal(e) {
+                e.preventDefault()
+                document.getElementById('requestModalOverlay').classList.add('active')
+            }
+
+            function closeRequestModal() {
+                document.getElementById('requestModalOverlay').classList.remove('active')
+            }
+
+            // Close modal when clicking outside the sheet
+            document.addEventListener('DOMContentLoaded', function () {
+                const overlay = document.getElementById('requestModalOverlay')
+                if (overlay) {
+                    overlay.addEventListener('click', function (e) {
+                        if (e.target === overlay) {
+                            closeRequestModal()
+                        }
+                    })
+                }
+            })
+        </script>
     </body>
 </html>
