@@ -25,9 +25,15 @@ class CertificateRequest(models.Model):
         ('rejected', 'Rejected'),
     ]
 
+    PAYMENT_STATUS_CHOICES = [
+        ('unpaid', 'Unpaid'),
+        ('paid', 'Paid'),
+    ]
+
     resident = models.ForeignKey(Resident, on_delete=models.CASCADE)
     certificate_type = models.ForeignKey(CertificateType, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
     date_requested = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 

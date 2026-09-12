@@ -385,6 +385,73 @@
                 padding-right: 4px;
             }
 
+            .confirm-modal .modal-sheet {
+                max-width: 380px;
+                text-align: center;
+            }
+
+            .confirm-modal .confirm-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: #fdecea;
+                color: #b71c1c;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 22px;
+                margin: 0 auto 16px;
+            }
+
+            .confirm-modal h2 {
+                font-size: 17px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+            .confirm-modal p {
+                font-size: 13px;
+                color: #777;
+                margin-bottom: 24px;
+            }
+
+            .confirm-actions {
+                display: flex;
+                gap: 12px;
+            }
+
+            .confirm-actions button,
+            .confirm-actions a {
+                flex: 1;
+                padding: 12px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 600;
+                font-family: 'Poppins', sans-serif;
+                cursor: pointer;
+                text-decoration: none;
+                text-align: center;
+                border: none;
+            }
+
+            .confirm-keep {
+                background: #f4f6fb;
+                color: #444;
+            }
+
+            .confirm-keep:hover {
+                background: #e8edfb;
+            }
+
+            .confirm-cancel-btn {
+                background: linear-gradient(135deg, #b71c1c, #7a1212);
+                color: white;
+            }
+
+            .confirm-cancel-btn:hover {
+                opacity: 0.9;
+            }
+
             @media (max-width: 700px) {
                 .stats-grid {
                     grid-template-columns: repeat(2, 1fr);
@@ -406,9 +473,9 @@
             </div>
             <div class="user-info">
                 <span><i class="fa-solid fa-user-circle"></i> {{ user.username }}</span>
-                <form method="post" action="{% url 'logout' %}">
+                <form method="post" action="{% url 'logout' %}" id="logoutForm">
                     {% csrf_token %}
-                    <button type="submit">Log Out</button>
+                    <button type="button" onclick="openLogoutConfirm(event)">Log Out</button>
                 </form>
             </div>
         </div>
@@ -485,6 +552,22 @@
             {% endif %}
         </div>
 
+        <div class="modal-overlay confirm-modal" id="logoutConfirmOverlay">
+            <div class="modal-sheet">
+                <div class="confirm-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
+                <h2>Log out?</h2>
+                <p>You'll need to log in again to access your dashboard.</p>
+                <div class="confirm-actions">
+                    <button type="button" class="confirm-keep" onclick="closeLogoutConfirm()">
+                        No, Stay
+                    </button>
+                    <button type="button" class="confirm-cancel-btn" onclick="confirmLogout()">
+                        Yes, Log Out
+                    </button>
+                </div>
+            </div>
+        </div>
+
         {% if not user.is_staff %}
         <div class="modal-overlay" id="requestModalOverlay">
             <div class="modal-sheet">
@@ -515,7 +598,7 @@
                         <div>
                             <div class="type">{{ req.certificate_type }}</div>
                             <div class="meta">Requested {{ req.date_requested|date:"M d, Y" }}</div>
-                            {% if req.status == 'approved' %}
+                            {% if req.status == 'approved' and req.payment_status == 'paid' %}
                             <a
                                 href="{% url 'download_certificate' req.id %}"
                                 style="
@@ -529,12 +612,22 @@
                             >
                                 <i class="fa-solid fa-download"></i> Download Certificate
                             </a>
+                            {% elif req.status == 'approved' and req.payment_status == 'unpaid' %}
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    color: #856404;
+                                    font-weight: 600;
+                                    margin-top: 6px;
+                                "
+                            >
+                                <i class="fa-solid fa-money-bill-wave"></i> Please pay at the
+                                barangay office to receive your certificate
+                            </div>
                             {% endif %} {% if req.status == 'pending' %}
                             <a
-                                href="{% url 'cancel_request' req.id %}"
-                                onclick="
-                                    return confirm('Are you sure you want to cancel this request?')
-                                "
+                                href="#"
+                                onclick="openCancelConfirm(event, '{% url 'cancel_request' req.id %}')"
                                 style="
                                     font-size: 12px;
                                     color: #b71c1c;
@@ -559,6 +652,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal-overlay confirm-modal" id="cancelConfirmOverlay">
+            <div class="modal-sheet">
+                <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h2>Cancel this request?</h2>
+                <p>This action can't be undone. Your pending request will be removed.</p>
+                <div class="confirm-actions">
+                    <button type="button" class="confirm-keep" onclick="closeCancelConfirm()">
+                        No, Keep It
+                    </button>
+                    <a href="#" id="confirmCancelLink" class="confirm-cancel-btn">Yes, Cancel</a>
+                </div>
+            </div>
+        </div>
         {% endif %}
 
         <script>
@@ -580,6 +687,29 @@
                 document.getElementById('myRequestsModalOverlay').classList.remove('active')
             }
 
+            function openCancelConfirm(e, cancelUrl) {
+                e.preventDefault()
+                document.getElementById('confirmCancelLink').setAttribute('href', cancelUrl)
+                document.getElementById('cancelConfirmOverlay').classList.add('active')
+            }
+
+            function closeCancelConfirm() {
+                document.getElementById('cancelConfirmOverlay').classList.remove('active')
+            }
+
+            function openLogoutConfirm(e) {
+                e.preventDefault()
+                document.getElementById('logoutConfirmOverlay').classList.add('active')
+            }
+
+            function closeLogoutConfirm() {
+                document.getElementById('logoutConfirmOverlay').classList.remove('active')
+            }
+
+            function confirmLogout() {
+                document.getElementById('logoutForm').submit()
+            }
+
             // Close modals when clicking outside the sheet
             document.addEventListener('DOMContentLoaded', function () {
                 const requestOverlay = document.getElementById('requestModalOverlay')
@@ -596,6 +726,24 @@
                     myRequestsOverlay.addEventListener('click', function (e) {
                         if (e.target === myRequestsOverlay) {
                             closeMyRequestsModal()
+                        }
+                    })
+                }
+
+                const cancelConfirmOverlay = document.getElementById('cancelConfirmOverlay')
+                if (cancelConfirmOverlay) {
+                    cancelConfirmOverlay.addEventListener('click', function (e) {
+                        if (e.target === cancelConfirmOverlay) {
+                            closeCancelConfirm()
+                        }
+                    })
+                }
+
+                const logoutConfirmOverlay = document.getElementById('logoutConfirmOverlay')
+                if (logoutConfirmOverlay) {
+                    logoutConfirmOverlay.addEventListener('click', function (e) {
+                        if (e.target === logoutConfirmOverlay) {
+                            closeLogoutConfirm()
                         }
                     })
                 }

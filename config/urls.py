@@ -29,6 +29,7 @@ urlpatterns = [
     path('request/', certificates_views.request_certificate, name='request_certificate'),
     path('my-requests/', certificates_views.my_requests, name='my_requests'),
     path('manage-requests/', certificates_views.manage_requests, name='manage_requests'),
+    path('manage-requests/<int:request_id>/mark-paid/', certificates_views.mark_as_paid, name='mark_as_paid'),
     path('manage-requests/<int:request_id>/<str:new_status>/', certificates_views.update_request_status, name='update_request_status'),
     path('certificate/<int:request_id>/download/', certificates_views.download_certificate, name='download_certificate'),
     path('my-requests/<int:request_id>/cancel/', certificates_views.cancel_request, name='cancel_request'),

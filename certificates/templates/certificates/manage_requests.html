@@ -69,6 +69,20 @@
                 margin-bottom: 28px;
             }
 
+            .section-title {
+                font-size: 15px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin: 34px 0 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .section-title:first-of-type {
+                margin-top: 0;
+            }
+
             .request-card {
                 background: #ffffff;
                 border-radius: 14px;
@@ -127,17 +141,26 @@
                 background: #f3c1c6;
             }
 
+            .btn-paid {
+                background: #fff3cd;
+                color: #856404;
+            }
+
+            .btn-paid:hover {
+                background: #ffe8a8;
+            }
+
             .empty {
                 text-align: center;
                 color: #aaa;
                 font-size: 14px;
-                padding: 60px 0;
+                padding: 40px 0;
             }
 
             .empty i {
-                font-size: 40px;
+                font-size: 32px;
                 display: block;
-                margin-bottom: 14px;
+                margin-bottom: 12px;
                 color: #ddd;
             }
         </style>
@@ -152,8 +175,11 @@
 
         <div class="container">
             <h1>Manage Requests</h1>
-            <p class="subtitle">Review and process pending certificate requests</p>
+            <p class="subtitle">Review pending requests and confirm payments</p>
 
+            <div class="section-title">
+                <i class="fa-solid fa-hourglass-half"></i> Pending Requests
+            </div>
             {% if requests %} {% for req in requests %}
             <div class="request-card">
                 <div class="info">
@@ -179,6 +205,29 @@
             <div class="empty">
                 <i class="fa-solid fa-clipboard-check"></i>
                 No pending requests right now.
+            </div>
+            {% endif %}
+
+            <div class="section-title">
+                <i class="fa-solid fa-money-bill-wave"></i> Awaiting Payment
+            </div>
+            {% if awaiting_payment %} {% for req in awaiting_payment %}
+            <div class="request-card">
+                <div class="info">
+                    <div class="type">{{ req.certificate_type }}</div>
+                    <div class="meta">
+                        Approved for {{ req.resident }} on {{ req.date_updated|date:"M d, Y" }}
+                        &mdash; awaiting payment at the barangay office
+                    </div>
+                </div>
+                <div class="actions">
+                    <a href="{% url 'mark_as_paid' req.id %}" class="btn btn-paid">Mark as Paid</a>
+                </div>
+            </div>
+            {% endfor %} {% else %}
+            <div class="empty">
+                <i class="fa-solid fa-circle-check"></i>
+                No approved requests waiting on payment.
             </div>
             {% endif %}
         </div>

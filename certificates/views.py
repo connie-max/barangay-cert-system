@@ -37,7 +37,7 @@ def request_certificate(request):
             new_request = form.save(commit=False)
             new_request.resident = resident
             new_request.save()
-            return redirect('my_requests')
+            return redirect('home')
     else:
         form = CertificateRequestForm()
 
@@ -54,7 +54,7 @@ def cancel_request(request, request_id):
     resident = Resident.objects.get(user=request.user)
     cert_request = get_object_or_404(CertificateRequest, id=request_id, resident=resident, status='pending')
     cert_request.delete()
-    return redirect('my_requests')
+    return redirect('home')
 
 def signup(request):
     if request.method == 'POST':
@@ -79,7 +79,11 @@ def is_staff_user(user):
 @user_passes_test(is_staff_user)
 def manage_requests(request):
     pending = CertificateRequest.objects.filter(status='pending')
-    return render(request, 'certificates/manage_requests.html', {'requests': pending})
+    awaiting_payment = CertificateRequest.objects.filter(status='approved', payment_status='unpaid')
+    return render(request, 'certificates/manage_requests.html', {
+        'requests': pending,
+        'awaiting_payment': awaiting_payment,
+    })
 
 @user_passes_test(is_staff_user)
 def update_request_status(request, request_id, new_status):
@@ -88,10 +92,23 @@ def update_request_status(request, request_id, new_status):
     cert_request.save()
     return redirect('manage_requests')
 
+@user_passes_test(is_staff_user)
+def mark_as_paid(request, request_id):
+    cert_request = get_object_or_404(CertificateRequest, id=request_id, status='approved')
+    cert_request.payment_status = 'paid'
+    cert_request.save()
+    return redirect('manage_requests')
+
 @login_required
 def download_certificate(request, request_id):
     resident = Resident.objects.get(user=request.user)
-    cert_request = get_object_or_404(CertificateRequest, id=request_id, resident=resident, status='approved')
+    cert_request = get_object_or_404(
+        CertificateRequest,
+        id=request_id,
+        resident=resident,
+        status='approved',
+        payment_status='paid',
+    )
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="certificate_{cert_request.id}.pdf"'
