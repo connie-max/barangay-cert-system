@@ -1,4 +1,5 @@
 <!doctype html>
+{% load static %}
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -452,6 +453,52 @@
                 opacity: 0.9;
             }
 
+            .payment-modal .modal-sheet {
+                max-width: 420px;
+                text-align: center;
+            }
+
+            .payment-modal .qr-image {
+                width: 220px;
+                height: auto;
+                border-radius: 12px;
+                margin: 4px auto 16px;
+                display: block;
+            }
+
+            .payment-modal .pay-instructions {
+                font-size: 13px;
+                color: #666;
+                line-height: 1.5;
+                margin-bottom: 18px;
+            }
+
+            .payment-modal form label {
+                display: block;
+                font-size: 12px;
+                color: #444;
+                margin-bottom: 6px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                text-align: left;
+            }
+
+            .payment-modal form input {
+                width: 100%;
+                padding: 12px 14px;
+                border: 1.5px solid #e5e5e5;
+                border-radius: 10px;
+                font-size: 14px;
+                font-family: 'Poppins', sans-serif;
+                margin-bottom: 16px;
+            }
+
+            .payment-modal form input:focus {
+                outline: none;
+                border-color: #2a5298;
+            }
+
             @media (max-width: 700px) {
                 .stats-grid {
                     grid-template-columns: repeat(2, 1fr);
@@ -530,7 +577,9 @@
                     </div>
                 </a>
             </div>
-            {% endif %} {% if user.is_staff %}
+            {% endif %}
+
+            {% if user.is_staff %}
             <div style="margin-top: 18px">
                 <a
                     href="{% url 'manage_requests' %}"
@@ -601,7 +650,9 @@
                 </form>
             </div>
         </div>
-        {% endif %} {% if not user.is_staff %}
+        {% endif %}
+
+        {% if not user.is_staff %}
         <div class="modal-overlay" id="myRequestsModalOverlay">
             <div class="modal-sheet" style="max-width: 500px">
                 <div class="modal-header">
@@ -615,7 +666,9 @@
                     <div class="request-item">
                         <div>
                             <div class="type">{{ req.certificate_type }}</div>
-                            <div class="meta">Requested {{ req.date_requested|date:"M d, Y" }}</div>
+                            <div class="meta">
+                                Requested {{ req.date_requested|date:"M d, Y" }}
+                            </div>
                             {% if req.status == 'approved' and req.payment_status == 'paid' %}
                             <a
                                 href="{% url 'download_certificate' req.id %}"
@@ -630,7 +683,7 @@
                             >
                                 <i class="fa-solid fa-download"></i> Download Certificate
                             </a>
-                            {% elif req.status == 'approved' and req.payment_status == 'unpaid' %}
+                            {% elif req.status == 'approved' and req.payment_status == 'pending_verification' %}
                             <div
                                 style="
                                     font-size: 12px;
@@ -639,9 +692,27 @@
                                     margin-top: 6px;
                                 "
                             >
-                                <i class="fa-solid fa-money-bill-wave"></i> Please pay at the
-                                barangay office to receive your certificate
+                                <i class="fa-solid fa-clock"></i> Payment submitted, awaiting
+                                verification by barangay staff
                             </div>
+                            {% elif req.status == 'approved' and req.payment_status == 'unpaid' %}
+                            <a
+                                href="#"
+                                onclick="openPaymentModal(event, '{% url 'submit_payment_reference' req.id %}', '{{ req.certificate_type }}')"
+                                style="
+                                    font-size: 12px;
+                                    color: white;
+                                    background: linear-gradient(135deg, #2a5298, #1e3c72);
+                                    font-weight: 600;
+                                    text-decoration: none;
+                                    display: inline-block;
+                                    padding: 6px 14px;
+                                    border-radius: 8px;
+                                    margin-top: 6px;
+                                "
+                            >
+                                <i class="fa-solid fa-qrcode"></i> Pay Now
+                            </a>
                             {% endif %} {% if req.status == 'pending' %}
                             <a
                                 href="#"
@@ -684,88 +755,143 @@
                 </div>
             </div>
         </div>
+        <div class="modal-overlay payment-modal" id="paymentModalOverlay">
+            <div class="modal-sheet">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-qrcode"></i> Pay for Certificate</h2>
+                    <button type="button" class="modal-close" onclick="closePaymentModal()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <img
+                    src="{% static 'certificates/gcash_qr_placeholder.png' %}"
+                    alt="GCash QR Code"
+                    class="qr-image"
+                />
+                <p class="pay-instructions" id="paymentInstructions">
+                    Scan this QR code using your GCash app to pay for your certificate. After
+                    paying, enter your GCash reference number below.
+                </p>
+                <form method="post" id="paymentForm" action="">
+                    {% csrf_token %}
+                    <label for="payment_reference">GCash Reference Number</label>
+                    <input
+                        type="text"
+                        name="payment_reference"
+                        id="payment_reference"
+                        placeholder="e.g. 1234567890123"
+                        required
+                    />
+                    <button type="submit" class="modal-submit">Submit Payment Reference</button>
+                </form>
+            </div>
+        </div>
         {% endif %}
 
         <script>
             function openRequestModal(e) {
-                e.preventDefault()
-                document.getElementById('requestModalOverlay').classList.add('active')
+                e.preventDefault();
+                document.getElementById('requestModalOverlay').classList.add('active');
             }
 
             function closeRequestModal() {
-                document.getElementById('requestModalOverlay').classList.remove('active')
+                document.getElementById('requestModalOverlay').classList.remove('active');
             }
 
             function openMyRequestsModal(e) {
-                e.preventDefault()
-                document.getElementById('myRequestsModalOverlay').classList.add('active')
+                e.preventDefault();
+                document.getElementById('myRequestsModalOverlay').classList.add('active');
             }
 
             function closeMyRequestsModal() {
-                document.getElementById('myRequestsModalOverlay').classList.remove('active')
+                document.getElementById('myRequestsModalOverlay').classList.remove('active');
             }
 
             function openCancelConfirm(e, cancelUrl) {
-                e.preventDefault()
-                document.getElementById('confirmCancelLink').setAttribute('href', cancelUrl)
-                document.getElementById('cancelConfirmOverlay').classList.add('active')
+                e.preventDefault();
+                document.getElementById('confirmCancelLink').setAttribute('href', cancelUrl);
+                document.getElementById('cancelConfirmOverlay').classList.add('active');
             }
 
             function closeCancelConfirm() {
-                document.getElementById('cancelConfirmOverlay').classList.remove('active')
+                document.getElementById('cancelConfirmOverlay').classList.remove('active');
+            }
+
+            function openPaymentModal(e, payUrl, certificateType) {
+                e.preventDefault();
+                document.getElementById('paymentForm').setAttribute('action', payUrl);
+                document.getElementById('paymentInstructions').textContent =
+                    'Scan this QR code using your GCash app to pay for your ' +
+                    certificateType +
+                    '. After paying, enter your GCash reference number below.';
+                document.getElementById('payment_reference').value = '';
+                document.getElementById('paymentModalOverlay').classList.add('active');
+            }
+
+            function closePaymentModal() {
+                document.getElementById('paymentModalOverlay').classList.remove('active');
             }
 
             function openLogoutConfirm(e) {
-                e.preventDefault()
-                document.getElementById('logoutConfirmOverlay').classList.add('active')
+                e.preventDefault();
+                document.getElementById('logoutConfirmOverlay').classList.add('active');
             }
 
             function closeLogoutConfirm() {
-                document.getElementById('logoutConfirmOverlay').classList.remove('active')
+                document.getElementById('logoutConfirmOverlay').classList.remove('active');
             }
 
             function confirmLogout() {
-                document.getElementById('logoutForm').submit()
+                document.getElementById('logoutForm').submit();
             }
 
             // Close modals when clicking outside the sheet
             document.addEventListener('DOMContentLoaded', function () {
-                const requestOverlay = document.getElementById('requestModalOverlay')
+                const requestOverlay = document.getElementById('requestModalOverlay');
                 if (requestOverlay) {
                     requestOverlay.addEventListener('click', function (e) {
                         if (e.target === requestOverlay) {
-                            closeRequestModal()
+                            closeRequestModal();
                         }
-                    })
+                    });
                 }
 
-                const myRequestsOverlay = document.getElementById('myRequestsModalOverlay')
+                const myRequestsOverlay = document.getElementById('myRequestsModalOverlay');
                 if (myRequestsOverlay) {
                     myRequestsOverlay.addEventListener('click', function (e) {
                         if (e.target === myRequestsOverlay) {
-                            closeMyRequestsModal()
+                            closeMyRequestsModal();
                         }
-                    })
+                    });
                 }
 
-                const cancelConfirmOverlay = document.getElementById('cancelConfirmOverlay')
+                const cancelConfirmOverlay = document.getElementById('cancelConfirmOverlay');
                 if (cancelConfirmOverlay) {
                     cancelConfirmOverlay.addEventListener('click', function (e) {
                         if (e.target === cancelConfirmOverlay) {
-                            closeCancelConfirm()
+                            closeCancelConfirm();
                         }
-                    })
+                    });
                 }
 
-                const logoutConfirmOverlay = document.getElementById('logoutConfirmOverlay')
+                const logoutConfirmOverlay = document.getElementById('logoutConfirmOverlay');
                 if (logoutConfirmOverlay) {
                     logoutConfirmOverlay.addEventListener('click', function (e) {
                         if (e.target === logoutConfirmOverlay) {
-                            closeLogoutConfirm()
+                            closeLogoutConfirm();
                         }
-                    })
+                    });
                 }
-            })
+
+                const paymentModalOverlay = document.getElementById('paymentModalOverlay');
+                if (paymentModalOverlay) {
+                    paymentModalOverlay.addEventListener('click', function (e) {
+                        if (e.target === paymentModalOverlay) {
+                            closePaymentModal();
+                        }
+                    });
+                }
+            });
         </script>
     </body>
 </html>

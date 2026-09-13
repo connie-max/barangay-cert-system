@@ -28,13 +28,15 @@ class CertificateRequest(models.Model):
 
     PAYMENT_STATUS_CHOICES = [
         ('unpaid', 'Unpaid'),
+        ('pending_verification', 'Pending Verification'),
         ('paid', 'Paid'),
     ]
 
     resident = models.ForeignKey(Resident, on_delete=models.CASCADE)
     certificate_type = models.ForeignKey(CertificateType, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
+    payment_status = models.CharField(max_length=25, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
+    payment_reference = models.CharField(max_length=100, blank=True)
     date_requested = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 

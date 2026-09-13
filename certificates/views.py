@@ -76,13 +76,30 @@ def signup(request):
 
     return render(request, 'certificates/signup.html', {'form': form})
 
+@login_required
+def submit_payment_reference(request, request_id):
+    resident = Resident.objects.get(user=request.user)
+    cert_request = get_object_or_404(
+        CertificateRequest,
+        id=request_id,
+        resident=resident,
+        status='approved',
+    )
+    if request.method == 'POST':
+        reference = request.POST.get('payment_reference', '').strip()
+        if reference:
+            cert_request.payment_reference = reference
+            cert_request.payment_status = 'pending_verification'
+            cert_request.save()
+    return redirect('home')
+
 def is_staff_user(user):
     return user.is_staff
 
 @user_passes_test(is_staff_user)
 def manage_requests(request):
     pending = CertificateRequest.objects.filter(status='pending')
-    awaiting_payment = CertificateRequest.objects.filter(status='approved', payment_status='unpaid')
+    awaiting_payment = CertificateRequest.objects.filter(status='approved').exclude(payment_status='paid')
     return render(request, 'certificates/manage_requests.html', {
         'requests': pending,
         'awaiting_payment': awaiting_payment,
