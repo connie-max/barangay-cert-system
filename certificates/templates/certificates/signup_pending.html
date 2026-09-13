@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Account Pending - Barangay Certificate System</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                background: linear-gradient(135deg, #1e3c72, #2a5298);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .card {
+                background: #ffffff;
+                padding: 44px 38px;
+                border-radius: 18px;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+                width: 100%;
+                max-width: 420px;
+                text-align: center;
+            }
+
+            .icon-header {
+                width: 64px;
+                height: 64px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #2a5298, #1e3c72);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 26px;
+                margin: 0 auto 22px;
+            }
+
+            .card h1 {
+                font-size: 19px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 12px;
+            }
+
+            .card p {
+                font-size: 13.5px;
+                color: #777;
+                line-height: 1.6;
+                margin-bottom: 26px;
+            }
+
+            .links a {
+                color: #2a5298;
+                text-decoration: none;
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .links a:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="icon-header"><i class="fa-solid fa-hourglass-half"></i></div>
+            <h1>Account Pending Approval</h1>
+            <p>
+                Thanks for signing up! Your account is currently being reviewed by Barangay
+                Poblacion staff. You'll be able to log in once your account is approved.
+            </p>
+            <div class="links">
+                <a href="{% url 'login' %}"><i class="fa-solid fa-arrow-left"></i> Back to Login</a>
+            </div>
+        </div>
+    </body>
+</html>

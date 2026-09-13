@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
+from django.contrib.auth.models import User
 from .forms import CertificateRequestForm, ResidentSignUpForm
 from .models import Resident, CertificateRequest
 from django.http import HttpResponse
@@ -60,14 +61,16 @@ def signup(request):
     if request.method == 'POST':
         form = ResidentSignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            user.is_active = False  # pending staff approval
+            user.save()
             Resident.objects.create(
                 user=user,
+                full_name=form.cleaned_data.get('full_name'),
                 address=form.cleaned_data.get('address'),
                 contact_number=form.cleaned_data.get('contact_number')
             )
-            login(request, user)
-            return redirect('home')
+            return render(request, 'certificates/signup_pending.html')
     else:
         form = ResidentSignUpForm()
 
@@ -99,6 +102,24 @@ def mark_as_paid(request, request_id):
     cert_request.save()
     return redirect('manage_requests')
 
+@user_passes_test(is_staff_user)
+def pending_accounts(request):
+    pending_users = User.objects.filter(is_active=False, is_staff=False)
+    return render(request, 'certificates/pending_accounts.html', {'pending_users': pending_users})
+
+@user_passes_test(is_staff_user)
+def approve_account(request, user_id):
+    account = get_object_or_404(User, id=user_id, is_active=False)
+    account.is_active = True
+    account.save()
+    return redirect('pending_accounts')
+
+@user_passes_test(is_staff_user)
+def reject_account(request, user_id):
+    account = get_object_or_404(User, id=user_id, is_active=False)
+    account.delete()
+    return redirect('pending_accounts')
+
 @login_required
 def download_certificate(request, request_id):
     resident = Resident.objects.get(user=request.user)
@@ -125,7 +146,7 @@ def download_certificate(request, request_id):
     p.setFont("Helvetica", 12)
     p.drawString(100, height - 220, f"This is to certify that:")
     p.setFont("Helvetica-Bold", 14)
-    p.drawString(100, height - 250, resident.user.username)
+    p.drawString(100, height - 250, resident.full_name or resident.user.username)
     p.setFont("Helvetica", 12)
     p.drawString(100, height - 280, f"Address: {resident.address}")
     p.drawString(100, height - 310, f"Is a resident in good standing as of {cert_request.date_updated.strftime('%B %d, %Y')}.")

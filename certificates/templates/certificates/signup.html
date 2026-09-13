@@ -241,6 +241,18 @@
 
                     <div class="form-row">
                         <div>
+                            <label for="{{ form.full_name.id_for_label }}">Full Name</label>
+                            {{ form.full_name }}
+                            <span class="helptext"
+                                >Your complete legal name, as it should appear on your
+                                certificate.</span
+                            >
+                            {{ form.full_name.errors }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
                             <label for="{{ form.username.id_for_label }}">Username</label>
                             {{ form.username }}
                             <span class="helptext">{{ form.username.help_text }}</span>

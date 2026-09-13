@@ -11,11 +11,12 @@ class CertificateType(models.Model):
 
 class Resident(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=150, default='')
     address = models.CharField(max_length=255)
     contact_number = models.CharField(max_length=20, blank=True)
 
     def __str__(self):
-        return self.user.username
+        return self.full_name or self.user.username
 
 
 class CertificateRequest(models.Model):
