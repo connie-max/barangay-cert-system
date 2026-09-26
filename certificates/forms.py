@@ -8,6 +8,16 @@ class CertificateRequestForm(forms.ModelForm):
         model = CertificateRequest
         fields = ['certificate_type']
 
+    def clean(self):
+        from .models import CERTIFICATE_TEXT_FIELDS
+        cleaned_data = super().clean()
+        cert_type = cleaned_data.get('certificate_type')
+        if cert_type and str(cert_type) in CERTIFICATE_TEXT_FIELDS:
+            field_info = CERTIFICATE_TEXT_FIELDS[str(cert_type)]
+            if not self.data.get(field_info['field_name']):
+                self.add_error(None, f"{field_info['label']} is required for this certificate type.")
+        return cleaned_data
+
 
 class ResidentSignUpForm(UserCreationForm):
     full_name = forms.CharField(max_length=150)

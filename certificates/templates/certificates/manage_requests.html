@@ -163,6 +163,65 @@
                 margin-bottom: 12px;
                 color: #ddd;
             }
+
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(10, 15, 30, 0.55);
+                z-index: 100;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-overlay.active {
+                display: flex;
+            }
+
+            .modal-sheet {
+                background: #ffffff;
+                border-radius: 18px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            }
+
+            .modal-close {
+                background: #f4f6fb;
+                border: none;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 14px;
+                color: #555;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-close:hover {
+                background: #e8edfb;
+            }
+
+            @media (max-width: 600px) {
+                .topbar {
+                    padding: 14px 20px;
+                }
+                .container {
+                    padding: 28px 16px;
+                }
+                .request-card {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 14px;
+                }
+                .request-card .actions {
+                    width: 100%;
+                }
+                .request-card .actions .btn {
+                    flex: 1;
+                    text-align: center;
+                }
+            }
         </style>
     </head>
     <body>
@@ -180,7 +239,7 @@
             <div class="section-title">
                 <i class="fa-solid fa-hourglass-half"></i> Pending Requests
             </div>
-            {% if requests %}
+                        {% if requests %}
             {% for req in requests %}
             <div class="request-card">
                 <div class="info">
@@ -188,6 +247,22 @@
                     <div class="meta">
                         Requested by {{ req.resident }} on {{ req.date_requested|date:"M d, Y" }}
                     </div>
+                    {% if req.financing_company %}
+                    <div class="meta">Financing company: <strong>{{ req.financing_company }}</strong></div>
+                    {% endif %}
+                    {% if req.attachments.all %}
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                        {% for attachment in req.attachments.all %}
+                        <img
+                            src="{{ attachment.image.url }}"
+                            alt="{{ attachment.label }}"
+                            title="{{ attachment.label }}"
+                            onclick="openImageLightbox('{{ attachment.image.url }}', '{{ attachment.label }}')"
+                            style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e5e5; cursor: pointer;"
+                        />
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="actions">
                     <a href="{% url 'update_request_status' req.id 'approved' %}" class="btn btn-approve">Approve</a>
@@ -231,5 +306,26 @@
             </div>
             {% endif %}
         </div>
+            <div class="modal-overlay" id="imageLightboxOverlay" onclick="closeImageLightbox()">
+            <div class="modal-sheet" style="max-width: 90vw; padding: 16px; text-align: center;" onclick="event.stopPropagation()">
+                <button type="button" class="modal-close" onclick="closeImageLightbox()" style="float: right;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <img id="lightboxImage" src="" alt="" style="max-width: 100%; max-height: 80vh; border-radius: 10px; margin-top: 30px;" />
+                <div id="lightboxLabel" style="margin-top: 10px; font-weight: 600; color: #1a1a2e;"></div>
+            </div>
+        </div>
+
+        <script>
+            function openImageLightbox(url, label) {
+                document.getElementById('lightboxImage').src = url;
+                document.getElementById('lightboxLabel').textContent = label;
+                document.getElementById('imageLightboxOverlay').classList.add('active');
+            }
+            function closeImageLightbox() {
+                document.getElementById('imageLightboxOverlay').classList.remove('active');
+                document.getElementById('lightboxImage').src = '';
+            }
+        </script>
     </body>
 </html>

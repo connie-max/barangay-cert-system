@@ -140,6 +140,27 @@
                 margin-bottom: 14px;
                 color: #ddd;
             }
+
+            @media (max-width: 600px) {
+                .topbar {
+                    padding: 14px 20px;
+                }
+                .container {
+                    padding: 28px 16px;
+                }
+                .account-card {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 14px;
+                }
+                .account-card .actions {
+                    width: 100%;
+                }
+                .account-card .actions .btn {
+                    flex: 1;
+                    text-align: center;
+                }
+            }
         </style>
     </head>
     <body>

@@ -509,6 +509,28 @@
                 .topbar {
                     padding: 16px 20px;
                 }
+                .modal-overlay {
+                    padding: 16px;
+                }
+                .modal-sheet {
+                    padding: 26px 22px 22px;
+                }
+            }
+
+            @media (max-width: 420px) {
+                .topbar .user-info span {
+                    display: none;
+                }
+                .stats-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 12px;
+                }
+                .stat-card {
+                    padding: 16px;
+                }
+                .confirm-actions {
+                    flex-direction: column;
+                }
             }
         </style>
     </head>
@@ -644,8 +666,14 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <form method="post" action="{% url 'request_certificate' %}">
-                    {% csrf_token %} {{ form.as_p }}
+                    <form method="post" action="{% url 'request_certificate' %}" enctype="multipart/form-data" id="certRequestForm">
+                        {% csrf_token %} {{ form.as_p }}
+                        <div id="dynamicRequirements"></div>
+                        {% if attachment_error %}
+                        <p style="color: #b71c1c; font-size: 13px; margin-top: -8px; margin-bottom: 14px;">
+                            {{ attachment_error }}
+                        </p>
+                    {% endif %}
                     <button type="submit" class="modal-submit">Submit Request</button>
                 </form>
             </div>
@@ -892,6 +920,48 @@
                     });
                 }
             });
+            const CERTIFICATE_REQUIREMENTS = JSON.parse('{{ certificate_requirements_json|escapejs }}');
+            const CERTIFICATE_TEXT_FIELDS = {
+                "Certificate of Loan": { field_name: "financing_company", label: "Name of Financing/Loan Company" }
+            };
+
+            function renderDynamicRequirements() {
+                const select = document.querySelector('#certRequestForm select[name="certificate_type"]');
+                const container = document.getElementById('dynamicRequirements');
+                if (!select || !container) return;
+
+                const selectedText = select.options[select.selectedIndex]
+                    ? select.options[select.selectedIndex].text.trim()
+                    : '';
+
+                container.innerHTML = '';
+
+                const requiredLabels = CERTIFICATE_REQUIREMENTS[selectedText] || [];
+                requiredLabels.forEach(function (label) {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.marginBottom = '16px';
+                    wrapper.innerHTML =
+                        '<label>' + label + '</label>' +
+                        '<input type="file" name="attachment_' + label + '" accept="image/*" required />';
+                    container.appendChild(wrapper);
+                });
+
+                const textFieldInfo = CERTIFICATE_TEXT_FIELDS[selectedText];
+                if (textFieldInfo) {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.marginBottom = '16px';
+                    wrapper.innerHTML =
+                        '<label>' + textFieldInfo.label + '</label>' +
+                        '<input type="text" name="' + textFieldInfo.field_name + '" placeholder="e.g. BPI Auto Loan" />';
+                    container.appendChild(wrapper);
+                }
+            }
+
+            const certTypeSelect = document.querySelector('#certRequestForm select[name="certificate_type"]');
+            if (certTypeSelect) {
+                certTypeSelect.addEventListener('change', renderDynamicRequirements);
+                renderDynamicRequirements();
+            }
         </script>
     </body>
 </html>

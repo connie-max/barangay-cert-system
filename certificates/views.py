@@ -1,9 +1,10 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from .forms import CertificateRequestForm, ResidentSignUpForm
-from .models import Resident, CertificateRequest
+from .models import Resident, CertificateRequest, RequestAttachment, CERTIFICATE_REQUIREMENTS
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -25,6 +26,7 @@ def home(request):
         'rejected_count': requests.filter(status='rejected').count(),
         'form': CertificateRequestForm(),
         'my_requests_list': requests,
+        'certificate_requirements_json': json.dumps(CERTIFICATE_REQUIREMENTS),
     }
     return render(request, 'certificates/home.html', context)
 
@@ -33,11 +35,47 @@ def request_certificate(request):
     resident = Resident.objects.get(user=request.user)
 
     if request.method == 'POST':
-        form = CertificateRequestForm(request.POST)
+        form = CertificateRequestForm(request.POST, request.FILES)
         if form.is_valid():
+            cert_type_name = str(form.cleaned_data['certificate_type'])
+            required_labels = CERTIFICATE_REQUIREMENTS.get(cert_type_name, [])
+
+            missing = [
+                label for label in required_labels
+                if f'attachment_{label}' not in request.FILES
+            ]
+
+            if missing:
+                error_msg = "Missing required upload(s): " + ", ".join(missing)
+                if request.user.is_staff:
+                    requests_qs = CertificateRequest.objects.all()
+                else:
+                    requests_qs = CertificateRequest.objects.filter(resident=resident)
+                context = {
+                    'total_requests': requests_qs.count(),
+                    'pending_count': requests_qs.filter(status='pending').count(),
+                    'approved_count': requests_qs.filter(status='approved').count(),
+                    'rejected_count': requests_qs.filter(status='rejected').count(),
+                    'form': form,
+                    'my_requests_list': requests_qs,
+                    'certificate_requirements_json': json.dumps(CERTIFICATE_REQUIREMENTS),
+                    'attachment_error': error_msg,
+                }
+                return render(request, 'certificates/home.html', context)
+
             new_request = form.save(commit=False)
             new_request.resident = resident
             new_request.save()
+
+            for label in required_labels:
+                field_name = f'attachment_{label}'
+                if field_name in request.FILES:
+                    RequestAttachment.objects.create(
+                        request=new_request,
+                        label=label,
+                        image=request.FILES[field_name],
+                    )
+
             return redirect('home')
     else:
         form = CertificateRequestForm()
