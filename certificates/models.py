@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 CERTIFICATE_REQUIREMENTS = {
     "Certificate of Residency": [],
@@ -60,6 +61,14 @@ class CertificateRequest(models.Model):
     financing_company = models.CharField(max_length=150, blank=True, null=True)
     date_requested = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
+    
+    @property
+    def days_waiting(self):
+        return (timezone.now() - self.date_requested).days
+
+    @property
+    def days_since_approved(self):
+        return (timezone.now() - self.date_updated).days
 
     def __str__(self):
         return f"{self.resident} - {self.certificate_type} ({self.status})"
