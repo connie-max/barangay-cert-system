@@ -3,16 +3,16 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 CERTIFICATE_REQUIREMENTS = {
-    "Certificate of Residency": [],
-    "Certificate of Barangay Clearance": [],
+    "Certificate of Residency": ["Valid ID"],
+    "Certificate of Barangay Clearance": ["Certificate of Residency"],
     "Certificate of Cash Assistance": ["Valid ID", "Photo of 3 Signatures"],
-    "Certificate of Medical": [],
-    "Certificate of Indigency": [],
+    "Certificate of Medical": ["Certificate of Residency"],
+    "Certificate of Indigency": ["Certificate of Residency"],
     "Cedula": [],
     "Certificate of Burial Assistance": ["Valid ID", "Photo of 3 Signatures"],
-    "Certificate of Loan": [],
-    "Certificate of Low Income": [],
-    "Certificate of Burial": [],
+    "Certificate of Loan": ["Certificate of Residency"],
+    "Certificate of Low Income": ["Certificate of Residency"],
+    "Certificate of Burial": ["Certificate of Residency"],
 }
 
 CERTIFICATE_TEXT_FIELDS = {

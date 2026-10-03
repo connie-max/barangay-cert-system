@@ -9,6 +9,23 @@ from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
+ID_TYPE_SIDES = {
+    "PhilSys National ID": ["Front", "Back"],
+    "Driver's License": ["Front", "Back"],
+    "Passport": ["Photo Page"],
+    "UMID": ["Front", "Back"],
+    "SSS ID": ["Front", "Back"],
+    "PhilHealth ID": ["Front", "Back"],
+    "Postal ID": ["Front", "Back"],
+    "Voter's ID": ["Front", "Back"],
+    "PRC ID": ["Front", "Back"],
+    "Senior Citizen ID": ["Front", "Back"],
+    "PWD ID": ["Front", "Back"],
+    "TIN ID": ["Front", "Back"],
+    "Barangay ID": ["Front", "Back"],
+    "Other": ["Front", "Back"],
+}
+
 @login_required
 def home(request):
     if request.user.is_staff:
@@ -40,13 +57,36 @@ def request_certificate(request):
             cert_type_name = str(form.cleaned_data['certificate_type'])
             required_labels = CERTIFICATE_REQUIREMENTS.get(cert_type_name, [])
 
+            needs_id = 'Valid ID' in required_labels
+            other_labels = [l for l in required_labels if l != 'Valid ID']
+
+            errors = []
+
             missing = [
-                label for label in required_labels
+                label for label in other_labels
                 if f'attachment_{label}' not in request.FILES
             ]
-
             if missing:
-                error_msg = "Missing required upload(s): " + ", ".join(missing)
+                errors.append("Missing required upload(s): " + ", ".join(missing) + ".")
+
+            # Valid ID: the server decides which sides are required
+            id_type = request.POST.get('id_type', '').strip()
+            id_sides = []
+            if needs_id:
+                if id_type not in ID_TYPE_SIDES:
+                    errors.append("Please select a valid ID type.")
+                else:
+                    id_sides = ID_TYPE_SIDES[id_type]
+                    missing_sides = [
+                        s for s in id_sides
+                        if f'id_file_{s}' not in request.FILES
+                    ]
+                    if missing_sides:
+                        errors.append(
+                            f"Missing {id_type} upload(s): " + ", ".join(missing_sides) + "."
+                        )
+
+            if errors:
                 if request.user.is_staff:
                     requests_qs = CertificateRequest.objects.all()
                 else:
@@ -59,7 +99,7 @@ def request_certificate(request):
                     'form': form,
                     'my_requests_list': requests_qs,
                     'certificate_requirements_json': json.dumps(CERTIFICATE_REQUIREMENTS),
-                    'attachment_error': error_msg,
+                    'attachment_error': " ".join(errors),
                 }
                 return render(request, 'certificates/home.html', context)
 
@@ -67,14 +107,19 @@ def request_certificate(request):
             new_request.resident = resident
             new_request.save()
 
-            for label in required_labels:
-                field_name = f'attachment_{label}'
-                if field_name in request.FILES:
-                    RequestAttachment.objects.create(
-                        request=new_request,
-                        label=label,
-                        image=request.FILES[field_name],
-                    )
+            for label in other_labels:
+                RequestAttachment.objects.create(
+                    request=new_request,
+                    label=label,
+                    image=request.FILES[f'attachment_{label}'],
+                )
+
+            for side in id_sides:
+                RequestAttachment.objects.create(
+                    request=new_request,
+                    label=f'Valid ID ({id_type}) - {side}',
+                    image=request.FILES[f'id_file_{side}'],
+                )
 
             return redirect('home')
     else:

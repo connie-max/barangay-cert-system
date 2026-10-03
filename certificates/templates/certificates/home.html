@@ -697,6 +697,73 @@
                     flex-direction: column;
                 }
             }
+
+            .upload-field {
+                position: relative;
+            }
+
+            .id-sides .upload-field {
+                margin-top: 12px;
+            }
+
+            .upload-actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .upload-btn {
+                flex: 1;
+                min-width: 130px;
+                padding: 11px 12px;
+                border: 1.5px dashed #c7d0e0;
+                background: #ffffff;
+                border-radius: 10px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 13px;
+                font-weight: 600;
+                color: #2a5298;
+                cursor: pointer;
+            }
+
+            .upload-btn:hover {
+                background: #f4f6fb;
+            }
+
+            #requestModalOverlay input[type="file"].upload-input {
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                width: 1px;
+                height: 1px;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .upload-preview {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+            }
+
+            .upload-preview:empty {
+                display: none;
+            }
+
+            .upload-preview img {
+                width: 56px;
+                height: 56px;
+                object-fit: cover;
+                border-radius: 8px;
+                border: 1px solid #e5e5e5;
+            }
+
+            .upload-preview span {
+                font-size: 12px;
+                color: #666;
+                overflow-wrap: anywhere;
+            }
         </style>
     </head>
     <body>
@@ -996,6 +1063,30 @@
         </div>
         {% endif %}
 
+                <div class="modal-overlay" id="webcamOverlay" style="z-index: 200">
+            <div class="modal-sheet" style="max-width: 520px; text-align: center">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-camera"></i> Take Photo</h2>
+                    <button type="button" class="modal-close" onclick="closeWebcam()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <video
+                    id="webcamVideo"
+                    autoplay
+                    playsinline
+                    muted
+                    style="width: 100%; border-radius: 12px; background: #000"
+                ></video>
+                <div class="confirm-actions" style="margin-top: 16px">
+                    <button type="button" class="confirm-keep" onclick="closeWebcam()">Cancel</button>
+                    <button type="button" class="modal-submit" style="margin-top: 0" onclick="captureWebcam()">
+                        Capture
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <script>
 
             function filterMyRequests(status) {
@@ -1017,7 +1108,7 @@
                     emptyMsg.classList.toggle('show', visibleCount === 0);
                 }
             }
-            
+
             function openRequestModal(e) {
                 e.preventDefault();
                 document.getElementById('requestModalOverlay').classList.add('active');
@@ -1121,10 +1212,121 @@
                     });
                 }
             });
-            const CERTIFICATE_REQUIREMENTS = JSON.parse('{{ certificate_requirements_json|escapejs }}');
+
+                        const CERTIFICATE_REQUIREMENTS = JSON.parse('{{ certificate_requirements_json|escapejs }}');
             const CERTIFICATE_TEXT_FIELDS = {
                 "Certificate of Loan": { field_name: "financing_company", label: "Name of Financing/Loan Company" }
             };
+
+            const ID_TYPES = {
+                "PhilSys National ID": ["Front", "Back"],
+                "Driver's License": ["Front", "Back"],
+                "Passport": ["Photo Page"],
+                "UMID": ["Front", "Back"],
+                "SSS ID": ["Front", "Back"],
+                "PhilHealth ID": ["Front", "Back"],
+                "Postal ID": ["Front", "Back"],
+                "Voter's ID": ["Front", "Back"],
+                "PRC ID": ["Front", "Back"],
+                "Senior Citizen ID": ["Front", "Back"],
+                "PWD ID": ["Front", "Back"],
+                "TIN ID": ["Front", "Back"],
+                "Barangay ID": ["Front", "Back"],
+                "Other": ["Front", "Back"]
+            };
+
+                        let webcamStream = null;
+            let webcamTargetInput = null;
+
+            function openWebcam(input) {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    alert('Camera is not available in this browser. Please use Choose from Gallery.');
+                    return;
+                }
+                navigator.mediaDevices
+                    .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+                    .then(function (stream) {
+                        webcamStream = stream;
+                        webcamTargetInput = input;
+                        document.getElementById('webcamVideo').srcObject = stream;
+                        document.getElementById('webcamOverlay').classList.add('active');
+                    })
+                    .catch(function () {
+                        alert('Could not access the camera. Allow camera permission or use Choose from Gallery.');
+                    });
+            }
+
+            function closeWebcam() {
+                if (webcamStream) {
+                    webcamStream.getTracks().forEach(function (t) { t.stop(); });
+                    webcamStream = null;
+                }
+                const video = document.getElementById('webcamVideo');
+                if (video) video.srcObject = null;
+                document.getElementById('webcamOverlay').classList.remove('active');
+                webcamTargetInput = null;
+            }
+
+            function captureWebcam() {
+                const video = document.getElementById('webcamVideo');
+                if (!video.videoWidth || !webcamTargetInput) return;
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const target = webcamTargetInput;
+                canvas.toBlob(function (blob) {
+                    const file = new File([blob], 'camera_' + Date.now() + '.jpg', { type: 'image/jpeg' });
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    target.files = dt.files;
+                    target.dispatchEvent(new Event('change'));
+                    closeWebcam();
+                }, 'image/jpeg', 0.9);
+            }
+
+            function buildUploadField(inputName, labelText) {
+                const field = document.createElement('div');
+                field.className = 'upload-field';
+                field.innerHTML =
+                    '<label>' + labelText + '</label>' +
+                    '<div class="upload-actions">' +
+                        '<button type="button" class="upload-btn upload-camera"><i class="fa-solid fa-camera"></i> Take Photo</button>' +
+                        '<button type="button" class="upload-btn upload-gallery"><i class="fa-solid fa-image"></i> Choose from Gallery</button>' +
+                    '</div>' +
+                    '<input type="file" name="' + inputName + '" accept="image/*" required class="upload-input" />' +
+                    '<div class="upload-preview"></div>';
+
+                const input = field.querySelector('.upload-input');
+                const preview = field.querySelector('.upload-preview');
+
+                field.querySelector('.upload-camera').addEventListener('click', function () {
+                    if (window.matchMedia('(pointer: coarse)').matches) {
+                        input.setAttribute('capture', 'environment');
+                        input.click();
+                    } else {
+                        openWebcam(input);
+                    }
+                });
+                field.querySelector('.upload-gallery').addEventListener('click', function () {
+                    input.removeAttribute('capture');
+                    input.click();
+                });
+                input.addEventListener('change', function () {
+                    preview.innerHTML = '';
+                    if (input.files && input.files[0]) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(input.files[0]);
+                        img.alt = 'Preview';
+                        const name = document.createElement('span');
+                        name.textContent = input.files[0].name;
+                        preview.appendChild(img);
+                        preview.appendChild(name);
+                    }
+                });
+
+                return field;
+            }
 
             function renderDynamicRequirements() {
                 const select = document.querySelector('#certRequestForm select[name="certificate_type"]');
@@ -1141,9 +1343,33 @@
                 requiredLabels.forEach(function (label) {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'req-field';
-                    wrapper.innerHTML =
-                        '<label>' + label + '</label>' +
-                        '<input type="file" name="attachment_' + label + '" accept="image/*" required />';
+
+                    if (label === 'Valid ID') {
+                        wrapper.innerHTML =
+                            '<label>ID Type</label>' +
+                            '<select name="id_type" required style="margin-bottom: 12px;">' +
+                            '<option value="">- Select ID type -</option>' +
+                            Object.keys(ID_TYPES).map(function (t) {
+                                return '<option value="' + t + '">' + t + '</option>';
+                            }).join('') +
+                            '</select>' +
+                            '<div class="id-sides"></div>';
+                        container.appendChild(wrapper);
+
+                        const idSelect = wrapper.querySelector('select[name="id_type"]');
+                        const sidesBox = wrapper.querySelector('.id-sides');
+                        idSelect.addEventListener('change', function () {
+                            sidesBox.innerHTML = '';
+                            (ID_TYPES[idSelect.value] || []).forEach(function (side) {
+                                sidesBox.appendChild(
+                                    buildUploadField('id_file_' + side, 'Valid ID - ' + side)
+                                );
+                            });
+                        });
+                        return;
+                    }
+
+                    wrapper.appendChild(buildUploadField('attachment_' + label, label));
                     container.appendChild(wrapper);
                 });
 
@@ -1163,6 +1389,10 @@
                 certTypeSelect.addEventListener('change', renderDynamicRequirements);
                 renderDynamicRequirements();
             }
+                        {% if attachment_error %}
+            const reqOverlay = document.getElementById('requestModalOverlay');
+            if (reqOverlay) reqOverlay.classList.add('active');
+            {% endif %}
         </script>
     </body>
 </html>
