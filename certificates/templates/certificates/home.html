@@ -634,7 +634,7 @@
                 border-color: #2a5298;
             }
 
-                        @media (max-width: 900px) {
+            @media (max-width: 900px) {
                 .stats-grid {
                     grid-template-columns: repeat(2, 1fr);
                 }
@@ -763,6 +763,16 @@
                 font-size: 12px;
                 color: #666;
                 overflow-wrap: anywhere;
+            }
+
+            .status.ready_for_pickup {
+                background: #d1ecf1;
+                color: #0c5460;
+            }
+
+            .filter-tab.active[data-filter="ready_for_pickup"] {
+                background: #0c5460;
+                border-color: #0c5460;
             }
         </style>
     </head>
@@ -930,6 +940,7 @@
                     <button type="button" class="filter-tab active" data-filter="all" onclick="filterMyRequests('all')">All</button>
                     <button type="button" class="filter-tab" data-filter="pending" onclick="filterMyRequests('pending')">Pending</button>
                     <button type="button" class="filter-tab" data-filter="approved" onclick="filterMyRequests('approved')">Approved</button>
+                    <button type="button" class="filter-tab" data-filter="ready_for_pickup" onclick="filterMyRequests('ready_for_pickup')">Ready</button>
                     <button type="button" class="filter-tab" data-filter="rejected" onclick="filterMyRequests('rejected')">Rejected</button>
                 </div>
                 <div class="modal-scroll-body">
@@ -940,20 +951,14 @@
                             <div class="meta">
                                 Requested {{ req.date_requested|date:"M d, Y" }}
                             </div>
-                            {% if req.status == 'approved' and req.payment_status == 'paid' %}
-                            <a
-                                href="{% url 'download_certificate' req.id %}"
-                                style="
-                                    font-size: 12px;
-                                    color: #2a5298;
-                                    font-weight: 600;
-                                    text-decoration: none;
-                                    display: inline-block;
-                                    margin-top: 6px;
-                                "
-                            >
-                                <i class="fa-solid fa-download"></i> Download Certificate
-                            </a>
+                            {% if req.status == 'ready_for_pickup' %}
+                            <div style="font-size: 12px; color: #155724; font-weight: 600; margin-top: 6px;">
+                                <i class="fa-solid fa-box-open"></i> Ready for pickup at the barangay hall
+                            </div>
+                            {% elif req.status == 'approved' and req.payment_status == 'paid' %}
+                            <div style="font-size: 12px; color: #856404; font-weight: 600; margin-top: 6px;">
+                                <i class="fa-solid fa-hourglass-half"></i> Payment confirmed, your certificate is being prepared
+                            </div>
                             {% elif req.status == 'approved' and req.payment_status == 'pending_verification' %}
                             <div
                                 style="
@@ -1001,7 +1006,7 @@
                             </a>
                             {% endif %}
                         </div>
-                        <span class="status {{ req.status }}">{{ req.status }}</span>
+                        <span class="status {{ req.status }}">{{ req.get_status_display }}</span>
                     </div>
                     {% empty %}
                     <div class="empty">
@@ -1063,7 +1068,7 @@
         </div>
         {% endif %}
 
-                <div class="modal-overlay" id="webcamOverlay" style="z-index: 200">
+        <div class="modal-overlay" id="webcamOverlay" style="z-index: 200">
             <div class="modal-sheet" style="max-width: 520px; text-align: center">
                 <div class="modal-header">
                     <h2><i class="fa-solid fa-camera"></i> Take Photo</h2>
@@ -1213,7 +1218,7 @@
                 }
             });
 
-                        const CERTIFICATE_REQUIREMENTS = JSON.parse('{{ certificate_requirements_json|escapejs }}');
+            const CERTIFICATE_REQUIREMENTS = JSON.parse('{{ certificate_requirements_json|escapejs }}');
             const CERTIFICATE_TEXT_FIELDS = {
                 "Certificate of Loan": { field_name: "financing_company", label: "Name of Financing/Loan Company" }
             };
@@ -1235,7 +1240,7 @@
                 "Other": ["Front", "Back"]
             };
 
-                        let webcamStream = null;
+            let webcamStream = null;
             let webcamTargetInput = null;
 
             function openWebcam(input) {
@@ -1389,7 +1394,7 @@
                 certTypeSelect.addEventListener('change', renderDynamicRequirements);
                 renderDynamicRequirements();
             }
-                        {% if attachment_error %}
+            {% if attachment_error %}
             const reqOverlay = document.getElementById('requestModalOverlay');
             if (reqOverlay) reqOverlay.classList.add('active');
             {% endif %}

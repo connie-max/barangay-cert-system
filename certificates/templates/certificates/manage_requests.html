@@ -89,6 +89,8 @@
                 gap: 8px;
                 margin-bottom: 28px;
                 border-bottom: 2px solid #e5e5e5;
+                overflow-x: auto;
+                overflow-y: hidden;
             }
 
             .tab-btn {
@@ -105,6 +107,7 @@
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                white-space: nowrap;
             }
 
             .tab-btn.active {
@@ -185,6 +188,11 @@
                 gap: 8px;
             }
 
+            /* Each action button now lives inside its own small POST form */
+            .request-card .actions form {
+                margin: 0;
+            }
+
             .btn {
                 padding: 9px 18px;
                 border: none;
@@ -220,8 +228,17 @@
                 color: #856404;
             }
 
-                        .btn-paid:hover {
+            .btn-paid:hover {
                 background: #ffe8a8;
+            }
+
+            .btn-ready {
+                background: #d1ecf1;
+                color: #0c5460;
+            }
+
+            .btn-ready:hover {
+                background: #bee5eb;
             }
 
             .contact-line {
@@ -307,7 +324,7 @@
                 justify-content: center;
             }
 
-                        .modal-close:hover {
+            .modal-close:hover {
                 background: #e8edfb;
             }
 
@@ -347,8 +364,12 @@
                 .request-card .actions {
                     width: 100%;
                 }
-                                .request-card .actions .btn {
+                /* Forms share the row equally; the button fills its form */
+                .request-card .actions form {
                     flex: 1;
+                }
+                .request-card .actions .btn {
+                    width: 100%;
                     text-align: center;
                     padding: 13px 18px;
                 }
@@ -396,23 +417,27 @@
 
         <div class="container">
             <h1>Manage Requests</h1>
-            <p class="subtitle">Review pending requests and confirm payments</p>
+            <p class="subtitle">Review requests, confirm payments, and release certificates</p>
 
-                        <div class="tabs">
+            <div class="tabs">
                 <button type="button" class="tab-btn active" onclick="switchTab('pendingTab', this)">
-                    <i class="fa-solid fa-hourglass-half"></i> Pending Requests
+                    <i class="fa-solid fa-hourglass-half"></i> Pending
                     <span class="count-badge">{{ requests|length }}</span>
                 </button>
                 <button type="button" class="tab-btn" onclick="switchTab('paymentTab', this)">
                     <i class="fa-solid fa-money-bill-wave"></i> Awaiting Payment
                     <span class="count-badge">{{ awaiting_payment|length }}</span>
                 </button>
+                <button type="button" class="tab-btn" onclick="switchTab('releaseTab', this)">
+                    <i class="fa-solid fa-box-open"></i> To Release
+                    <span class="count-badge">{{ ready_to_release|length }}</span>
+                </button>
             </div>
 
             <div class="tab-content active" id="pendingTab">
                 {% if requests %}
                 {% for req in requests %}
-                                <div class="request-card">
+                <div class="request-card">
                     <div class="info">
                         <div class="type">{{ req.certificate_type }}</div>
                         <div class="meta">
@@ -440,7 +465,7 @@
                                 src="{{ attachment.image.url }}"
                                 alt="{{ attachment.label }}"
                                 title="{{ attachment.label }}"
-                                onclick="openImageLightbox('{{ attachment.image.url }}', '{{ attachment.label }}')"
+                                onclick="openImageLightbox('{{ attachment.image.url }}', '{{ attachment.label|escapejs }}')"
                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e5e5; cursor: pointer;"
                             />
                             {% endfor %}
@@ -448,8 +473,14 @@
                         {% endif %}
                     </div>
                     <div class="actions">
-                        <a href="{% url 'update_request_status' req.id 'approved' %}" class="btn btn-approve">Approve</a>
-                        <a href="{% url 'update_request_status' req.id 'rejected' %}" class="btn btn-reject">Reject</a>
+                        <form method="post" action="{% url 'update_request_status' req.id 'approved' %}" onsubmit="return confirm('Approve this request?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-approve">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'update_request_status' req.id 'rejected' %}" onsubmit="return confirm('Reject this request? The resident will see it as rejected.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-reject">Reject</button>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
@@ -464,7 +495,7 @@
             <div class="tab-content" id="paymentTab">
                 {% if awaiting_payment %}
                 {% for req in awaiting_payment %}
-                                <div class="request-card">
+                <div class="request-card">
                     <div class="info">
                         <div class="type">{{ req.certificate_type }}</div>
                         <div class="meta">
@@ -489,7 +520,10 @@
                         {% endif %}
                     </div>
                     <div class="actions">
-                        <a href="{% url 'mark_as_paid' req.id %}" class="btn btn-paid">Mark as Paid</a>
+                        <form method="post" action="{% url 'mark_as_paid' req.id %}" onsubmit="return confirm('Confirm that the GCash payment was received?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-paid">Mark as Paid</button>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
@@ -500,8 +534,43 @@
                 </div>
                 {% endif %}
             </div>
+
+            <div class="tab-content" id="releaseTab">
+                {% if ready_to_release %}
+                {% for req in ready_to_release %}
+                <div class="request-card">
+                    <div class="info">
+                        <div class="type">{{ req.certificate_type }}</div>
+                        <div class="meta">
+                            Paid by {{ req.resident }}
+                            {% if req.payment_reference %}
+                            &mdash; GCash reference: <strong>{{ req.payment_reference }}</strong>
+                            {% endif %}
+                        </div>
+                        {% if req.resident.contact_number %}
+                        <div class="contact-line">
+                            <i class="fa-solid fa-phone"></i> {{ req.resident.contact_number }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="actions">
+                        <form method="post" action="{% url 'mark_ready_for_pickup' req.id %}" onsubmit="return confirm('Mark this certificate as ready for pickup?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-ready">Mark Ready for Pickup</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty">
+                    <i class="fa-solid fa-box-open"></i>
+                    No paid requests waiting to be released.
+                </div>
+                {% endif %}
+            </div>
         </div>
-            <div class="modal-overlay" id="imageLightboxOverlay" onclick="closeImageLightbox()">
+
+        <div class="modal-overlay" id="imageLightboxOverlay" onclick="closeImageLightbox()">
             <div class="modal-sheet lightbox-sheet" onclick="event.stopPropagation()">
                 <button type="button" class="modal-close" onclick="closeImageLightbox()" style="float: right;">
                     <i class="fa-solid fa-xmark"></i>

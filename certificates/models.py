@@ -44,6 +44,7 @@ class CertificateRequest(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('approved', 'Approved'),
+        ('ready_for_pickup', 'Ready for Pickup'),
         ('rejected', 'Rejected'),
     ]
 
@@ -55,13 +56,13 @@ class CertificateRequest(models.Model):
 
     resident = models.ForeignKey(Resident, on_delete=models.CASCADE)
     certificate_type = models.ForeignKey(CertificateType, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=25, choices=PAYMENT_STATUS_CHOICES, default='unpaid')
     payment_reference = models.CharField(max_length=100, blank=True)
     financing_company = models.CharField(max_length=150, blank=True, null=True)
     date_requested = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
-    
+
     @property
     def days_waiting(self):
         return (timezone.now() - self.date_requested).days

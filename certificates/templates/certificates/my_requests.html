@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>My Requests - Barangay Certificate System</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -100,6 +100,10 @@
                 background: #d4edda;
                 color: #155724;
             }
+            .status.ready_for_pickup {
+                background: #d1ecf1;
+                color: #0c5460;
+            }
             .status.rejected {
                 background: #f8d7da;
                 color: #721c24;
@@ -149,20 +153,10 @@
                 <div>
                     <div class="type">{{ req.certificate_type }}</div>
                     <div class="meta">Requested {{ req.date_requested|date:"M d, Y" }}</div>
-                    {% if req.status == 'approved' %}
-                    <a
-                        href="{% url 'download_certificate' req.id %}"
-                        style="
-                            font-size: 12px;
-                            color: #2a5298;
-                            font-weight: 600;
-                            text-decoration: none;
-                            display: inline-block;
-                            margin-top: 6px;
-                        "
-                    >
-                        <i class="fa-solid fa-download"></i> Download Certificate
-                    </a>
+                    {% if req.status == 'ready_for_pickup' %}
+                    <div style="font-size: 12px; color: #155724; font-weight: 600; margin-top: 6px;">
+                        <i class="fa-solid fa-box-open"></i> Ready for pickup at the barangay hall
+                    </div>
                     {% endif %} {% if req.status == 'pending' %}
                     <a
                         href="{% url 'cancel_request' req.id %}"
@@ -180,7 +174,7 @@
                     </a>
                     {% endif %}
                 </div>
-                <span class="status {{ req.status }}">{{ req.status }}</span>
+                <span class="status {{ req.status }}">{{ req.get_status_display }}</span>
             </div>
             {% endfor %}
 

@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Pending Accounts - Barangay Certificate System</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -79,23 +79,36 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                gap: 14px;
+            }
+
+            .account-card .info {
+                min-width: 0;
             }
 
             .account-card .info .name {
                 font-weight: 600;
                 font-size: 15px;
                 color: #1a1a2e;
+                overflow-wrap: anywhere;
             }
 
             .account-card .info .meta {
                 font-size: 12px;
                 color: #999;
                 margin-top: 4px;
+                overflow-wrap: anywhere;
             }
 
             .account-card .actions {
                 display: flex;
                 gap: 8px;
+                flex-shrink: 0;
+            }
+
+            /* Each action button now lives inside its own small POST form */
+            .account-card .actions form {
+                margin: 0;
             }
 
             .btn {
@@ -156,10 +169,16 @@
                 }
                 .account-card .actions {
                     width: 100%;
+                    gap: 12px;
+                }
+                /* Forms share the row equally; the button fills its form */
+                .account-card .actions form {
+                    flex: 1;
                 }
                 .account-card .actions .btn {
-                    flex: 1;
+                    width: 100%;
                     text-align: center;
+                    padding: 13px 18px;
                 }
             }
         </style>
@@ -189,8 +208,14 @@
                     </div>
                 </div>
                 <div class="actions">
-                    <a href="{% url 'approve_account' account.id %}" class="btn btn-approve">Approve</a>
-                    <a href="{% url 'reject_account' account.id %}" class="btn btn-reject" onclick="return confirm('Reject and permanently remove this account?')">Reject</a>
+                    <form method="post" action="{% url 'approve_account' account.id %}" onsubmit="return confirm('Approve this account? The resident will be able to log in.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-approve">Approve</button>
+                    </form>
+                    <form method="post" action="{% url 'reject_account' account.id %}" onsubmit="return confirm('Reject and permanently remove this account?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-reject">Reject</button>
+                    </form>
                 </div>
             </div>
             {% endfor %}
