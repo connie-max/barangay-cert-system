@@ -10,22 +10,57 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+6+1^6^4deo=s_dzgz(2_1uht=&lwjk#otb^q-k!wjx%+rd-ot'
+# ---------------------------------------------------------------------------
+# Environment-driven settings
+# On your laptop nothing needs to be set: it runs in DEBUG mode like before.
+# On the server (PythonAnywhere) we set these environment variables:
+#   DJANGO_DEBUG=False
+#   DJANGO_SECRET_KEY=<a new random key>
+#   DJANGO_ALLOWED_HOSTS=<username>.pythonanywhere.com
+# ---------------------------------------------------------------------------
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-local-development-key-only'
+    else:
+        # Refuse to start on the server without a real key.
+        raise ImproperlyConfigured(
+            'Set the DJANGO_SECRET_KEY environment variable.'
+        )
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        'DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost'
+    ).split(',')
+    if host.strip()
+]
+
+# Allow form posts (CSRF) from our https domain(s) on the server.
+CSRF_TRUSTED_ORIGINS = [
+    'https://' + host
+    for host in ALLOWED_HOSTS
+    if host not in ('127.0.0.1', 'localhost')
+]
+
+# Only send login/CSRF cookies over HTTPS when running on the server.
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -105,7 +140,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Philippine time so request dates/times show correctly to residents and staff.
+TIME_ZONE = 'Asia/Manila'
 
 USE_I18N = True
 
@@ -116,6 +152,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# `collectstatic` gathers every app's static files here for the server to serve.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Media files (user uploads - e.g. certificate requirement attachments)
