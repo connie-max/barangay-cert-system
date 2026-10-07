@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Account Pending - Barangay Certificate System</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -24,6 +24,7 @@
                 font-family: 'Poppins', sans-serif;
                 background: linear-gradient(135deg, #1e3c72, #2a5298);
                 min-height: 100vh;
+                min-height: 100dvh;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -61,21 +62,32 @@
             }
 
             .card p {
-                font-size: 13.5px;
-                color: #777;
+                font-size: 14px;
+                color: #666;
                 line-height: 1.6;
                 margin-bottom: 26px;
             }
 
             .links a {
+                display: inline-block;
+                padding: 12px 20px;
                 color: #2a5298;
                 text-decoration: none;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 600;
             }
 
             .links a:hover {
                 text-decoration: underline;
+            }
+
+            @media (max-width: 480px) {
+                body {
+                    padding: 12px;
+                }
+                .card {
+                    padding: 34px 22px;
+                }
             }
         </style>
     </head>

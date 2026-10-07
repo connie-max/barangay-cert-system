@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Login - Barangay Certificate System</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -24,6 +24,7 @@
                 font-family: 'Poppins', sans-serif;
                 background: linear-gradient(135deg, #1e3c72, #2a5298);
                 min-height: 100vh;
+                min-height: 100dvh;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -96,6 +97,7 @@
 
             .form-panel {
                 flex: 1;
+                min-width: 0;
                 padding: 54px 48px;
                 display: flex;
                 flex-direction: column;
@@ -111,7 +113,7 @@
 
             .form-panel .subtitle {
                 font-size: 14px;
-                color: #999;
+                color: #777;
                 margin-bottom: 32px;
             }
 
@@ -154,13 +156,14 @@
                 font-size: 14px;
             }
 
+            /* 16px stops iPhones from zooming into the field when tapped */
             input[type='text'],
             input[type='password'] {
                 width: 100%;
                 padding: 13px 15px 13px 40px;
                 border: 1.5px solid #e5e5e5;
                 border-radius: 10px;
-                font-size: 15px;
+                font-size: 16px;
                 font-family: 'Poppins', sans-serif;
                 transition: border-color 0.2s;
             }
@@ -173,12 +176,13 @@
 
             button {
                 width: 100%;
+                min-height: 48px;
                 padding: 14px;
                 background: linear-gradient(135deg, #2a5298, #1e3c72);
                 color: white;
                 border: none;
                 border-radius: 10px;
-                font-size: 15px;
+                font-size: 16px;
                 font-weight: 600;
                 font-family: 'Poppins', sans-serif;
                 cursor: pointer;
@@ -190,14 +194,59 @@
                 opacity: 0.9;
             }
 
-            @media (max-width: 700px) {
+            /* Tablets and phones: stack the panels, login form FIRST */
+            @media (max-width: 900px) {
                 .auth-wrapper {
-                    flex-direction: column;
+                    flex-direction: column-reverse;
                     min-height: auto;
                 }
                 .side-panel {
                     flex: none;
-                    padding: 34px;
+                    padding: 28px 24px;
+                }
+                .side-panel .logo {
+                    width: 52px;
+                    height: 52px;
+                    font-size: 24px;
+                    margin-bottom: 14px;
+                }
+                .side-panel h2 {
+                    font-size: 20px;
+                    margin-bottom: 8px;
+                }
+                .side-panel p {
+                    font-size: 14px;
+                    margin-bottom: 20px;
+                }
+                .form-panel {
+                    padding: 36px 32px;
+                }
+            }
+
+            /* Small phones */
+            @media (max-width: 480px) {
+                body {
+                    padding: 12px;
+                }
+                .auth-wrapper {
+                    border-radius: 16px;
+                }
+                .form-panel {
+                    padding: 28px 20px;
+                }
+                .form-panel h1 {
+                    font-size: 22px;
+                }
+                .form-panel .subtitle {
+                    margin-bottom: 24px;
+                }
+                .side-panel p {
+                    display: none;
+                }
+                .side-panel a {
+                    width: 100%;
+                    text-align: center;
+                    padding: 14px;
                 }
             }
         </style>
@@ -231,7 +280,14 @@
                         <label for="id_username">Username</label>
                         <div class="input-wrap">
                             <i class="fa-solid fa-user"></i>
-                            <input type="text" name="username" id="id_username" />
+                            <input
+                                type="text"
+                                name="username"
+                                id="id_username"
+                                autocomplete="username"
+                                autocapitalize="none"
+                                autocorrect="off"
+                            />
                         </div>
                     </div>
 
@@ -239,7 +295,12 @@
                         <label for="id_password">Password</label>
                         <div class="input-wrap">
                             <i class="fa-solid fa-lock"></i>
-                            <input type="password" name="password" id="id_password" />
+                            <input
+                                type="password"
+                                name="password"
+                                id="id_password"
+                                autocomplete="current-password"
+                            />
                         </div>
                     </div>
 
