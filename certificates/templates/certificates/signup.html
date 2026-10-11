@@ -72,6 +72,11 @@
                 margin-bottom: 14px;
             }
 
+            /* The brand name only shows on phones/tablets (see media query) */
+            .side-panel .brand-title {
+                display: none;
+            }
+
             .side-panel p {
                 font-size: 15px;
                 opacity: 0.85;
@@ -149,6 +154,15 @@
                 border-color: #2a5298;
             }
 
+            /* Password fields get wrapped by the script below so the eye can sit inside */
+            .pw-wrap {
+                position: relative;
+            }
+
+            .pw-wrap input {
+                padding-right: 48px;
+            }
+
             .helptext {
                 display: block;
                 font-size: 12px;
@@ -216,34 +230,100 @@
                 opacity: 0.9;
             }
 
-            /* Tablets and phones: stack the panels, sign-up form FIRST */
+            /* Main button: text + arrow */
+            .submit-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            /* Show/hide password eye (overrides the big blue button style) */
+            button.pw-toggle {
+                position: absolute;
+                right: 6px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 38px;
+                height: 38px;
+                min-height: 0;
+                padding: 0;
+                margin: 0;
+                background: none;
+                border-radius: 8px;
+                color: #8a8a8a;
+                font-size: 15px;
+            }
+
+            button.pw-toggle:hover {
+                color: #2a5298;
+                opacity: 1;
+            }
+
+            /* "Sign In" block under the form: phones/tablets only */
+            .alt-action {
+                display: none;
+                margin-top: 22px;
+                text-align: center;
+            }
+
+            .alt-action p {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 10px;
+            }
+
+            .alt-btn {
+                display: block;
+                width: 100%;
+                padding: 13px;
+                border: 1.5px solid #2a5298;
+                border-radius: 10px;
+                color: #2a5298;
+                text-decoration: none;
+                font-size: 16px;
+                font-weight: 600;
+                transition: background 0.2s;
+            }
+
+            .alt-btn:hover,
+            .alt-btn:active {
+                background: #eef3fb;
+            }
+
+            /* Tablets and phones: brand on top, then the form, then Sign In */
             @media (max-width: 900px) {
                 .auth-wrapper {
-                    flex-direction: column-reverse;
+                    flex-direction: column;
                     min-height: auto;
                 }
                 .side-panel {
                     flex: none;
-                    padding: 28px 24px;
+                    padding: 26px 24px 22px;
                 }
                 .side-panel .logo {
                     width: 52px;
                     height: 52px;
                     font-size: 24px;
-                    margin-bottom: 14px;
+                    margin-bottom: 12px;
                 }
-                .side-panel h2 {
+                .side-panel .panel-heading,
+                .side-panel p,
+                .side-panel a {
+                    display: none;
+                }
+                .side-panel .brand-title {
+                    display: block;
                     font-size: 20px;
-                    margin-bottom: 8px;
-                }
-                .side-panel p {
-                    font-size: 14px;
-                    margin-bottom: 20px;
+                    margin-bottom: 0;
                 }
                 .form-panel {
                     overflow-y: visible;
                     max-height: none;
-                    padding: 36px 32px;
+                    padding: 30px 28px 32px;
+                }
+                .alt-action {
+                    display: block;
                 }
             }
 
@@ -263,20 +343,18 @@
                 .auth-wrapper {
                     border-radius: 16px;
                 }
+                .side-panel {
+                    padding: 22px 20px 18px;
+                }
+                .side-panel .brand-title {
+                    font-size: 18px;
+                }
                 .form-panel {
-                    padding: 28px 20px;
+                    padding: 24px 20px 28px;
                 }
                 .form-panel h1 {
                     font-size: 22px;
                     margin-bottom: 24px;
-                }
-                .side-panel p {
-                    display: none;
-                }
-                .side-panel a {
-                    width: 100%;
-                    text-align: center;
-                    padding: 14px;
                 }
             }
         </style>
@@ -285,7 +363,8 @@
         <div class="auth-wrapper">
             <div class="side-panel">
                 <div class="logo"><i class="fa-solid fa-landmark"></i></div>
-                <h2>Welcome Back!</h2>
+                <h2 class="panel-heading">Welcome Back!</h2>
+                <h2 class="brand-title">Barangay Certificate System</h2>
                 <p>
                     Already have an account? Sign in to access your certificate requests and
                     dashboard.
@@ -348,9 +427,42 @@
                         </div>
                     </div>
 
-                    <button type="submit">Sign Up</button>
+                    <button type="submit" class="submit-btn">
+                        Sign Up <i class="fa-solid fa-arrow-right"></i>
+                    </button>
                 </form>
+
+                <div class="alt-action">
+                    <p>Already have an account?</p>
+                    <a class="alt-btn" href="{% url 'login' %}">Sign In</a>
+                </div>
             </div>
         </div>
+
+        <script>
+            // Add a show/hide eye to every password field Django renders.
+            document.querySelectorAll('form input[type="password"]').forEach(function (input) {
+                var wrap = document.createElement('div');
+                wrap.className = 'pw-wrap';
+                input.parentNode.insertBefore(wrap, input);
+                wrap.appendChild(input);
+
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'pw-toggle';
+                btn.setAttribute('aria-label', 'Show password');
+                btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                wrap.appendChild(btn);
+
+                btn.addEventListener('click', function () {
+                    var show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    btn.querySelector('i').className = show
+                        ? 'fa-solid fa-eye-slash'
+                        : 'fa-solid fa-eye';
+                });
+            });
+        </script>
     </body>
 </html>

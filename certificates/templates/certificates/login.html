@@ -147,7 +147,8 @@
                 position: relative;
             }
 
-            .input-wrap i {
+            /* Only the icon sitting directly inside the wrapper (the left icon) */
+            .input-wrap > i {
                 position: absolute;
                 left: 15px;
                 top: 50%;
@@ -174,6 +175,11 @@
                 border-color: #2a5298;
             }
 
+            /* Room on the right for the show/hide eye */
+            .input-wrap.has-toggle input {
+                padding-right: 48px;
+            }
+
             button {
                 width: 100%;
                 min-height: 48px;
@@ -194,32 +200,96 @@
                 opacity: 0.9;
             }
 
-            /* Tablets and phones: stack the panels, login form FIRST */
+            /* Main button: text + arrow */
+            .submit-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            /* Show/hide password eye (overrides the big blue button style) */
+            button.pw-toggle {
+                position: absolute;
+                right: 6px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 38px;
+                height: 38px;
+                min-height: 0;
+                padding: 0;
+                margin: 0;
+                background: none;
+                border-radius: 8px;
+                color: #8a8a8a;
+                font-size: 15px;
+            }
+
+            button.pw-toggle:hover {
+                color: #2a5298;
+                opacity: 1;
+            }
+
+            /* "Create Account" block under the form: phones/tablets only */
+            .alt-action {
+                display: none;
+                margin-top: 22px;
+                text-align: center;
+            }
+
+            .alt-action p {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 10px;
+            }
+
+            .alt-btn {
+                display: block;
+                width: 100%;
+                padding: 13px;
+                border: 1.5px solid #2a5298;
+                border-radius: 10px;
+                color: #2a5298;
+                text-decoration: none;
+                font-size: 16px;
+                font-weight: 600;
+                transition: background 0.2s;
+            }
+
+            .alt-btn:hover,
+            .alt-btn:active {
+                background: #eef3fb;
+            }
+
+            /* Tablets and phones: brand on top, then the form, then Create Account */
             @media (max-width: 900px) {
                 .auth-wrapper {
-                    flex-direction: column-reverse;
+                    flex-direction: column;
                     min-height: auto;
                 }
                 .side-panel {
                     flex: none;
-                    padding: 28px 24px;
+                    padding: 26px 24px 22px;
                 }
                 .side-panel .logo {
                     width: 52px;
                     height: 52px;
                     font-size: 24px;
-                    margin-bottom: 14px;
+                    margin-bottom: 12px;
                 }
                 .side-panel h2 {
                     font-size: 20px;
-                    margin-bottom: 8px;
+                    margin-bottom: 0;
                 }
-                .side-panel p {
-                    font-size: 14px;
-                    margin-bottom: 20px;
+                .side-panel p,
+                .side-panel a {
+                    display: none;
                 }
                 .form-panel {
-                    padding: 36px 32px;
+                    padding: 30px 28px 32px;
+                }
+                .alt-action {
+                    display: block;
                 }
             }
 
@@ -231,22 +301,20 @@
                 .auth-wrapper {
                     border-radius: 16px;
                 }
+                .side-panel {
+                    padding: 22px 20px 18px;
+                }
+                .side-panel h2 {
+                    font-size: 18px;
+                }
                 .form-panel {
-                    padding: 28px 20px;
+                    padding: 24px 20px 28px;
                 }
                 .form-panel h1 {
                     font-size: 22px;
                 }
                 .form-panel .subtitle {
-                    margin-bottom: 24px;
-                }
-                .side-panel p {
-                    display: none;
-                }
-                .side-panel a {
-                    width: 100%;
-                    text-align: center;
-                    padding: 14px;
+                    margin-bottom: 22px;
                 }
             }
         </style>
@@ -293,7 +361,7 @@
 
                     <div class="form-group">
                         <label for="id_password">Password</label>
-                        <div class="input-wrap">
+                        <div class="input-wrap has-toggle">
                             <i class="fa-solid fa-lock"></i>
                             <input
                                 type="password"
@@ -301,12 +369,36 @@
                                 id="id_password"
                                 autocomplete="current-password"
                             />
+                            <button type="button" class="pw-toggle" aria-label="Show password">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <button type="submit">Log In</button>
+                    <button type="submit" class="submit-btn">
+                        Log In <i class="fa-solid fa-arrow-right"></i>
+                    </button>
                 </form>
+
+                <div class="alt-action">
+                    <p>New here?</p>
+                    <a class="alt-btn" href="{% url 'signup' %}">Create Account</a>
+                </div>
             </div>
         </div>
+
+        <script>
+            document.querySelectorAll('.pw-toggle').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var input = btn.parentNode.querySelector('input');
+                    var show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    btn.querySelector('i').className = show
+                        ? 'fa-solid fa-eye-slash'
+                        : 'fa-solid fa-eye';
+                });
+            });
+        </script>
     </body>
 </html>
