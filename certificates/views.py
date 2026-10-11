@@ -1,9 +1,10 @@
 import json
+import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib.auth.models import User
-from django.http import Http404
+from django.http import Http404, FileResponse
 from django.views.decorators.http import require_POST
 from .forms import CertificateRequestForm, ResidentSignUpForm
 from .models import Resident, CertificateRequest, RequestAttachment, CERTIFICATE_REQUIREMENTS
@@ -178,6 +179,28 @@ def submit_payment_reference(request, request_id):
 
 def is_staff_user(user):
     return user.is_staff
+
+@login_required
+def attachment_image(request, attachment_id):
+    # Uploaded requirement photos (IDs, signatures, etc.) are private.
+    # They are NOT served from a public /media/ URL. This view is the only
+    # way to open them, and it only allows staff or the resident who uploaded
+    # the photo. Everyone else gets a 404 (we don't even confirm it exists).
+    attachment = get_object_or_404(RequestAttachment, id=attachment_id)
+    is_owner = attachment.request.resident.user_id == request.user.id
+    if not (request.user.is_staff or is_owner):
+        raise Http404("Not found")
+
+    try:
+        file_handle = attachment.image.open('rb')
+    except (FileNotFoundError, ValueError):
+        raise Http404("File not found")
+
+    content_type, _ = mimetypes.guess_type(attachment.image.name)
+    response = FileResponse(file_handle, content_type=content_type or 'application/octet-stream')
+    # Keep browsers and proxies from storing a copy of someone's ID
+    response['Cache-Control'] = 'private, no-store'
+    return response
 
 @user_passes_test(is_staff_user)
 def manage_requests(request):

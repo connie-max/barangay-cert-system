@@ -15,8 +15,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.conf import settings
-from django.conf.urls.static import static
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from certificates import views as certificates_views
@@ -39,7 +37,6 @@ urlpatterns = [
     path('pending-accounts/', certificates_views.pending_accounts, name='pending_accounts'),
     path('pending-accounts/<int:user_id>/approve/', certificates_views.approve_account, name='approve_account'),
     path('pending-accounts/<int:user_id>/reject/', certificates_views.reject_account, name='reject_account'),
+    # Private uploaded photos: staff (or the uploader) only. There is no public /media/ route.
+    path('attachments/<int:attachment_id>/', certificates_views.attachment_image, name='attachment_image'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

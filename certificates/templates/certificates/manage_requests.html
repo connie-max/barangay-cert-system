@@ -462,10 +462,10 @@
                         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
                             {% for attachment in req.attachments.all %}
                             <img
-                                src="{{ attachment.image.url }}"
+                                src="{% url 'attachment_image' attachment.id %}"
                                 alt="{{ attachment.label }}"
                                 title="{{ attachment.label }}"
-                                onclick="openImageLightbox('{{ attachment.image.url }}', '{{ attachment.label|escapejs }}')"
+                                onclick="openImageLightbox('{% url 'attachment_image' attachment.id %}', '{{ attachment.label|escapejs }}')"
                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e5e5; cursor: pointer;"
                             />
                             {% endfor %}
