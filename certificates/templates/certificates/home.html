@@ -570,6 +570,12 @@
                 border: none;
             }
 
+            .confirm-actions form {
+                flex: 1;
+                display: flex;
+                margin: 0;
+            }
+
             .confirm-keep {
                 background: #f4f6fb;
                 color: #444;
@@ -1031,7 +1037,10 @@
                     <button type="button" class="confirm-keep" onclick="closeCancelConfirm()">
                         No, Keep It
                     </button>
-                    <a href="#" id="confirmCancelLink" class="confirm-cancel-btn">Yes, Cancel</a>
+                    <form method="post" id="cancelForm" action="">
+                        {% csrf_token %}
+                        <button type="submit" class="confirm-cancel-btn">Yes, Cancel</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -1134,7 +1143,7 @@
 
             function openCancelConfirm(e, cancelUrl) {
                 e.preventDefault();
-                document.getElementById('confirmCancelLink').setAttribute('href', cancelUrl);
+                document.getElementById('cancelForm').setAttribute('action', cancelUrl);
                 document.getElementById('cancelConfirmOverlay').classList.add('active');
             }
 

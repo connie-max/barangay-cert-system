@@ -135,7 +135,10 @@ def my_requests(request):
     return render(request, 'certificates/my_requests.html', {'requests': requests})
 
 @login_required
+@require_POST
 def cancel_request(request, request_id):
+    # Cancelling deletes the request, so it must be a deliberate POST (with CSRF),
+    # never a link. A GET now returns 405 Method Not Allowed.
     resident = Resident.objects.get(user=request.user)
     cert_request = get_object_or_404(CertificateRequest, id=request_id, resident=resident, status='pending')
     cert_request.delete()

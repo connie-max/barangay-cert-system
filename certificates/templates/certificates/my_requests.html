@@ -141,6 +141,23 @@
             .links a:hover {
                 text-decoration: underline;
             }
+
+            /* Cancel is a small POST form; the button looks like the old link */
+            .cancel-form {
+                display: inline-block;
+                margin-top: 6px;
+            }
+
+            .cancel-btn {
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+                font-size: 12px;
+                font-weight: 600;
+                color: #b71c1c;
+            }
         </style>
     </head>
     <body>
@@ -157,21 +174,19 @@
                     <div style="font-size: 12px; color: #155724; font-weight: 600; margin-top: 6px;">
                         <i class="fa-solid fa-box-open"></i> Ready for pickup at the barangay hall
                     </div>
-                    {% endif %} {% if req.status == 'pending' %}
-                    <a
-                        href="{% url 'cancel_request' req.id %}"
-                        onclick="return confirm('Are you sure you want to cancel this request?')"
-                        style="
-                            font-size: 12px;
-                            color: #b71c1c;
-                            font-weight: 600;
-                            text-decoration: none;
-                            display: inline-block;
-                            margin-top: 6px;
-                        "
+                    {% endif %}
+                    {% if req.status == 'pending' %}
+                    <form
+                        method="post"
+                        action="{% url 'cancel_request' req.id %}"
+                        class="cancel-form"
+                        onsubmit="return confirm('Are you sure you want to cancel this request?');"
                     >
-                        <i class="fa-solid fa-xmark"></i> Cancel Request
-                    </a>
+                        {% csrf_token %}
+                        <button type="submit" class="cancel-btn">
+                            <i class="fa-solid fa-xmark"></i> Cancel Request
+                        </button>
+                    </form>
                     {% endif %}
                 </div>
                 <span class="status {{ req.status }}">{{ req.get_status_display }}</span>
