@@ -1,13 +1,16 @@
 import json
 import mimetypes
+from datetime import date, timedelta
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib.auth.models import User
-from django.http import Http404, FileResponse
+from django.http import Http404, FileResponse, HttpResponse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .forms import CertificateRequestForm, ResidentSignUpForm
-from .models import Resident, CertificateRequest, RequestAttachment, CERTIFICATE_REQUIREMENTS
+from .models import Resident, CertificateRequest, RequestAttachment, CERTIFICATE_REQUIREMENTS, CERTIFICATE_FEE
+from . import report_exports
 
 ID_TYPE_SIDES = {
     "PhilSys National ID": ["Front", "Back"],
@@ -205,17 +208,23 @@ def attachment_image(request, attachment_id):
     response['Cache-Control'] = 'private, no-store'
     return response
 
-@user_passes_test(is_staff_user)
-def manage_requests(request):
+def build_manage_context():
+    # One place that builds the three staff lists, so manage_requests and the
+    # "OR number problem" re-render in mark_as_paid always show the same data.
     pending = CertificateRequest.objects.filter(status='pending')
     awaiting_payment = CertificateRequest.objects.filter(status='approved').exclude(payment_status='paid')
     # Paid but not yet released: staff prints/signs the certificate, then marks it ready
     ready_to_release = CertificateRequest.objects.filter(status='approved', payment_status='paid')
-    return render(request, 'certificates/manage_requests.html', {
+    return {
         'requests': pending,
         'awaiting_payment': awaiting_payment,
         'ready_to_release': ready_to_release,
-    })
+        'certificate_fee': CERTIFICATE_FEE,
+    }
+
+@user_passes_test(is_staff_user)
+def manage_requests(request):
+    return render(request, 'certificates/manage_requests.html', build_manage_context())
 
 # The four staff actions below change data, so they accept POST only.
 # A plain link (GET) now returns "405 Method Not Allowed", and the form
@@ -238,7 +247,34 @@ def update_request_status(request, request_id, new_status):
 @require_POST
 def mark_as_paid(request, request_id):
     cert_request = get_object_or_404(CertificateRequest, id=request_id, status='approved')
+
+    # Already paid? Do nothing, so a double-tap can never overwrite the saved OR number.
+    if cert_request.payment_status == 'paid':
+        return redirect('manage_requests')
+
+    # The server re-checks everything the browser sends.
+    # " ".join(split()) tidies extra spaces: "DDO   4348601 " -> "DDO 4348601"
+    or_number = " ".join(request.POST.get('or_number', '').split())
+
+    error = None
+    if not or_number:
+        error = "Please enter the Official Receipt (OR) number."
+    elif len(or_number) > 30:
+        error = "The OR number is too long (30 characters max)."
+    elif CertificateRequest.objects.filter(or_number__iexact=or_number).exists():
+        # Each paper OR number is used once, so a repeat is almost always a typo.
+        error = f"OR number {or_number} is already recorded on another request."
+
+    if error:
+        context = build_manage_context()
+        context['payment_error'] = error
+        return render(request, 'certificates/manage_requests.html', context)
+
     cert_request.payment_status = 'paid'
+    cert_request.or_number = or_number
+    cert_request.amount_paid = CERTIFICATE_FEE
+    cert_request.date_paid = timezone.now()
+    cert_request.confirmed_by = request.user
     cert_request.save()
     return redirect('manage_requests')
 
@@ -253,6 +289,118 @@ def mark_ready_for_pickup(request, request_id):
         cert_request.status = 'ready_for_pickup'
         cert_request.save()
     return redirect('manage_requests')
+
+# ---------------------------------------------------------------------------
+# Collections Report: every payment that staff recorded with an OR number.
+# Read-only (GET), staff only, and it never shows ID photos.
+# The two helpers below are shared with the Excel/PDF downloads (next step),
+# so the screen and the downloaded files always show exactly the same rows.
+# ---------------------------------------------------------------------------
+
+def get_collections_period(request):
+    """Turn the ?period=... &start=... &end=... in the URL into (period, start, end, error)."""
+    today = timezone.localdate()
+    first_this_month = today.replace(day=1)
+    first_next_month = (first_this_month + timedelta(days=32)).replace(day=1)
+    period = request.GET.get('period', 'this_month')
+    error = None
+
+    if period == 'last_month':
+        end = first_this_month - timedelta(days=1)
+        start = end.replace(day=1)
+    elif period == 'custom':
+        try:
+            start = date.fromisoformat(request.GET.get('start', ''))
+            end = date.fromisoformat(request.GET.get('end', ''))
+            if start > end:
+                raise ValueError
+        except ValueError:
+            error = "Please pick a valid date range (the start date can't be after the end date)."
+            period = 'this_month'
+            start, end = first_this_month, first_next_month - timedelta(days=1)
+    else:
+        period = 'this_month'
+        start, end = first_this_month, first_next_month - timedelta(days=1)
+
+    return period, start, end, error
+
+
+def get_collections_rows(start, end):
+    """Paid requests that have a recorded OR number, between start and end (inclusive)."""
+    return (
+        CertificateRequest.objects
+        .filter(payment_status='paid', date_paid__isnull=False,
+                date_paid__date__gte=start, date_paid__date__lte=end)
+        .select_related('resident', 'certificate_type')
+        .order_by('date_paid', 'id')
+    )
+
+
+@user_passes_test(is_staff_user)
+def collections_report(request):
+    period, start, end, error = get_collections_period(request)
+    rows = list(get_collections_rows(start, end))
+    total = sum((r.amount_paid or 0) for r in rows)
+    # Requests paid BEFORE OR numbers were recorded have no OR/date, so they can't be listed.
+    older_paid_count = CertificateRequest.objects.filter(
+        payment_status='paid', date_paid__isnull=True
+    ).count()
+    return render(request, 'certificates/collections_report.html', {
+        'rows': rows,
+        'total': total,
+        'period': period,
+        'start': start,
+        'end': end,
+        'period_error': error,
+        'older_paid_count': older_paid_count,
+        # Download buttons carry the exact dates shown on screen, so the files match the page.
+        'export_query': f"period=custom&start={start.isoformat()}&end={end.isoformat()}",
+    })
+
+def _report_rows_as_plain_data(start, end):
+    """Rows as simple dicts so report_exports.py needs no Django knowledge."""
+    return [
+        {
+            'date': timezone.localtime(r.date_paid).date(),
+            'or_number': r.or_number,
+            'payor': str(r.resident),
+            'nature': str(r.certificate_type),
+            'amount': r.amount_paid or 0,
+        }
+        for r in get_collections_rows(start, end)
+    ]
+
+
+def _download_response(content, content_type, filename):
+    response = HttpResponse(content, content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    # The file lists names and amounts, so keep browsers/proxies from storing a copy.
+    response['Cache-Control'] = 'private, no-store'
+    return response
+
+
+@user_passes_test(is_staff_user)
+def collections_report_xlsx(request):
+    period, start, end, error = get_collections_period(request)
+    rows = _report_rows_as_plain_data(start, end)
+    content = report_exports.build_xlsx(rows, start, end)
+    return _download_response(
+        content,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        f'collections_report_{start.isoformat()}_to_{end.isoformat()}.xlsx',
+    )
+
+
+@user_passes_test(is_staff_user)
+def collections_report_pdf(request):
+    period, start, end, error = get_collections_period(request)
+    rows = _report_rows_as_plain_data(start, end)
+    content = report_exports.build_pdf(rows, start, end, timezone.localdate())
+    return _download_response(
+        content,
+        'application/pdf',
+        f'collections_report_{start.isoformat()}_to_{end.isoformat()}.pdf',
+    )
 
 @user_passes_test(is_staff_user)
 def pending_accounts(request):

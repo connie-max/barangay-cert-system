@@ -1,19 +1,3 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -37,6 +21,10 @@ urlpatterns = [
     path('pending-accounts/', certificates_views.pending_accounts, name='pending_accounts'),
     path('pending-accounts/<int:user_id>/approve/', certificates_views.approve_account, name='approve_account'),
     path('pending-accounts/<int:user_id>/reject/', certificates_views.reject_account, name='reject_account'),
+    # Staff-only report of recorded payments (OR numbers) to pass to the higher-ups.
+    path('collections-report/', certificates_views.collections_report, name='collections_report'),
+    path('collections-report/download.xlsx', certificates_views.collections_report_xlsx, name='collections_report_xlsx'),
+    path('collections-report/download.pdf', certificates_views.collections_report_pdf, name='collections_report_pdf'),
     # Private uploaded photos: staff (or the uploader) only. There is no public /media/ route.
     path('attachments/<int:attachment_id>/', certificates_views.attachment_image, name='attachment_image'),
 ]

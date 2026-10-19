@@ -1,6 +1,12 @@
+from decimal import Decimal
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+
+# Every certificate costs the same fixed amount, so it lives in ONE place.
+# If the barangay ever changes the fee, change it here only.
+CERTIFICATE_FEE = Decimal('50.00')
 
 CERTIFICATE_REQUIREMENTS = {
     "Certificate of Residency": ["Valid ID"],
@@ -62,6 +68,21 @@ class CertificateRequest(models.Model):
     financing_company = models.CharField(max_length=150, blank=True, null=True)
     date_requested = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
+
+    # --- Collections record (filled in when staff click "Mark as Paid") ---
+    # The barangay's paper Official Receipt is still the legal document;
+    # these fields only RECORD it so the Collections Report can list it.
+    # Older paid requests keep these blank/empty (no data is lost).
+    or_number = models.CharField(max_length=30, blank=True)
+    amount_paid = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    date_paid = models.DateTimeField(null=True, blank=True)
+    confirmed_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='confirmed_payments',
+    )
 
     @property
     def days_waiting(self):
