@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from .forms import CertificateRequestForm, ResidentSignUpForm
 from .models import Resident, CertificateRequest, RequestAttachment, CERTIFICATE_REQUIREMENTS, CERTIFICATE_FEE
 from . import report_exports
+from . import notifications
 
 ID_TYPE_SIDES = {
     "PhilSys National ID": ["Front", "Back"],
@@ -241,6 +242,10 @@ def update_request_status(request, request_id, new_status):
     if cert_request:
         cert_request.status = new_status
         cert_request.save()
+        if new_status == 'approved':
+            notifications.notify_request_approved(cert_request)
+        else:
+            notifications.notify_request_rejected(cert_request)
     return redirect('manage_requests')
 
 @user_passes_test(is_staff_user)
@@ -288,6 +293,7 @@ def mark_ready_for_pickup(request, request_id):
     if cert_request:
         cert_request.status = 'ready_for_pickup'
         cert_request.save()
+        notifications.notify_ready_for_pickup(cert_request)
     return redirect('manage_requests')
 
 # ---------------------------------------------------------------------------
@@ -413,6 +419,7 @@ def approve_account(request, user_id):
     account = get_object_or_404(User, id=user_id, is_active=False)
     account.is_active = True
     account.save()
+    notifications.notify_account_approved(account)
     return redirect('pending_accounts')
 
 @user_passes_test(is_staff_user)

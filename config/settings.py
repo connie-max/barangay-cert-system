@@ -162,14 +162,32 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
-
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
+
+# Email notifications (Django 6.1 style)
+# Laptop: the two variables below are not set, so emails are only printed in the terminal.
+# Server: set DJANGO_EMAIL_USER and DJANGO_EMAIL_PASSWORD in the WSGI file to send through Gmail.
+MAIL_USER = os.environ.get('DJANGO_EMAIL_USER', '')
+MAIL_PASSWORD = os.environ.get('DJANGO_EMAIL_PASSWORD', '')
+
+if MAIL_USER and MAIL_PASSWORD:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+            'OPTIONS': {
+                'host': 'smtp.gmail.com',
+                'use_tls': True,
+                'username': MAIL_USER,
+                'password': MAIL_PASSWORD,
+            },
+        },
+    }
+else:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        },
+    }
+
+DEFAULT_FROM_EMAIL = MAIL_USER or 'barangay@localhost'

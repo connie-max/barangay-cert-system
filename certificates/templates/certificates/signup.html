@@ -378,7 +378,7 @@
                 <form method="post">
                     {% csrf_token %}
 
-                    <div class="form-row">
+                                        <div class="form-row">
                         <div>
                             <label for="{{ form.full_name.id_for_label }}">Full Name</label>
                             {{ form.full_name }}
@@ -387,6 +387,18 @@
                                 certificate.</span
                             >
                             {{ form.full_name.errors }}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div>
+                            <label for="{{ form.email.id_for_label }}">Email Address</label>
+                            {{ form.email }}
+                            <span class="helptext"
+                                >We'll email you when your request is approved or ready for
+                                pickup.</span
+                            >
+                            {{ form.email.errors }}
                         </div>
                     </div>
 

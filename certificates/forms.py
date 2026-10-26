@@ -21,9 +21,16 @@ class CertificateRequestForm(forms.ModelForm):
 
 class ResidentSignUpForm(UserCreationForm):
     full_name = forms.CharField(max_length=150)
+    email = forms.EmailField(max_length=254)
     address = forms.CharField(max_length=255)
     contact_number = forms.CharField(max_length=20, required=False)
 
     class Meta:
         model = User
-        fields = ['username', 'password1', 'password2', 'full_name', 'address', 'contact_number']
+        fields = ['username', 'email', 'password1', 'password2', 'full_name', 'address', 'contact_number']
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("This email is already used by another account.")
+        return email
