@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import Http404, FileResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -428,3 +429,25 @@ def reject_account(request, user_id):
     account = get_object_or_404(User, id=user_id, is_active=False)
     account.delete()
     return redirect('pending_accounts')
+
+@user_passes_test(is_staff_user)
+def residents_list(request):
+    # Read-only list of approved residents (no ID photos). Pending accounts are on their own page.
+    query = request.GET.get('q', '').strip()
+    residents = (
+        Resident.objects.select_related('user')
+        .filter(user__is_active=True, user__is_staff=False)
+        .order_by('full_name')
+    )
+    if query:
+        residents = residents.filter(
+            Q(full_name__icontains=query)
+            | Q(address__icontains=query)
+            | Q(contact_number__icontains=query)
+            | Q(user__email__icontains=query)
+            | Q(user__username__icontains=query)
+        )
+    return render(request, 'certificates/residents_list.html', {
+        'residents': residents,
+        'query': query,
+    })

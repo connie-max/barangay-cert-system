@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Residents - Barangay Certificate System</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        />
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                background: #f4f6fb;
+                min-height: 100vh;
+            }
+
+            .topbar {
+                background: #ffffff;
+                padding: 18px 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            }
+
+            .topbar .brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 700;
+                font-size: 16px;
+                color: #2a5298;
+            }
+
+            .topbar a {
+                color: #2a5298;
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }
+
+            .container h1 {
+                font-size: 24px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 6px;
+            }
+
+            .container .subtitle {
+                font-size: 14px;
+                color: #888;
+                margin-bottom: 24px;
+            }
+
+            /* Search */
+            .search-form {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 14px;
+            }
+
+            .search-form input[type='search'] {
+                flex: 1;
+                min-width: 0;
+                padding: 12px 15px;
+                border: 1.5px solid #e5e5e5;
+                border-radius: 10px;
+                font-size: 16px;
+                font-family: 'Poppins', sans-serif;
+                background: #ffffff;
+            }
+
+            .search-form input[type='search']:focus {
+                outline: none;
+                border-color: #2a5298;
+            }
+
+            .btn {
+                padding: 12px 22px;
+                border: none;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+                text-decoration: none;
+                display: inline-block;
+                text-align: center;
+            }
+
+            .btn-search {
+                background: linear-gradient(135deg, #2a5298, #1e3c72);
+                color: #ffffff;
+            }
+
+            .btn-search:hover {
+                opacity: 0.9;
+            }
+
+            .btn:focus-visible,
+            .topbar a:focus-visible,
+            .clear-link:focus-visible {
+                outline: 2px solid #2a5298;
+                outline-offset: 2px;
+            }
+
+            .result-line {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                font-size: 13px;
+                color: #777;
+                margin-bottom: 16px;
+                min-height: 20px;
+            }
+
+            .clear-link {
+                color: #2a5298;
+                text-decoration: none;
+                font-weight: 500;
+            }
+
+            .clear-link:hover {
+                text-decoration: underline;
+            }
+
+            /* Resident cards */
+            .resident-card {
+                background: #ffffff;
+                border-radius: 14px;
+                padding: 20px 24px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+                margin-bottom: 14px;
+            }
+
+            .resident-card .name {
+                font-weight: 600;
+                font-size: 16px;
+                color: #1a1a2e;
+                overflow-wrap: anywhere;
+            }
+
+            .resident-card .username {
+                font-size: 12px;
+                color: #999;
+                margin-top: 2px;
+                overflow-wrap: anywhere;
+            }
+
+            .details {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px 24px;
+                margin-top: 14px;
+                padding-top: 14px;
+                border-top: 1px solid #eef0f6;
+            }
+
+            .detail {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                font-size: 13px;
+                color: #444;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            .detail i {
+                color: #2a5298;
+                width: 16px;
+                text-align: center;
+                margin-top: 3px;
+                flex-shrink: 0;
+            }
+
+            .detail.wide {
+                grid-column: 1 / -1;
+            }
+
+            .muted {
+                color: #aaa;
+                font-style: italic;
+            }
+
+            .empty {
+                text-align: center;
+                color: #aaa;
+                font-size: 14px;
+                padding: 60px 0;
+            }
+
+            .empty i {
+                font-size: 40px;
+                display: block;
+                margin-bottom: 14px;
+                color: #ddd;
+            }
+
+            @media (max-width: 600px) {
+                .topbar {
+                    padding: 14px 20px;
+                }
+                .container {
+                    padding: 28px 16px;
+                }
+                .search-form {
+                    flex-direction: column;
+                }
+                .btn-search {
+                    width: 100%;
+                    padding: 13px 18px;
+                }
+                .resident-card {
+                    padding: 18px 18px;
+                }
+                .details {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="topbar">
+            <div class="brand">
+                <i class="fa-solid fa-landmark"></i> Barangay Certificate System
+            </div>
+            <a href="{% url 'home' %}">Back to Home</a>
+        </div>
+
+        <div class="container">
+            <h1>Residents</h1>
+            <p class="subtitle">Approved residents who can log in and request certificates</p>
+
+            <form class="search-form" method="get" action="{% url 'residents_list' %}">
+                <input
+                    type="search"
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="Search by name, address, contact number or email"
+                    aria-label="Search residents"
+                    autocomplete="off"
+                />
+                <button type="submit" class="btn btn-search">Search</button>
+            </form>
+
+            <div class="result-line">
+                <span>
+                    {{ residents|length }} resident{{ residents|length|pluralize }}{% if query %} found for &ldquo;{{ query }}&rdquo;{% endif %}
+                </span>
+                {% if query %}
+                <a class="clear-link" href="{% url 'residents_list' %}">Clear search</a>
+                {% endif %}
+            </div>
+
+            {% if residents %}
+            {% for resident in residents %}
+            <div class="resident-card">
+                <div class="name">{{ resident.full_name|default:resident.user.username }}</div>
+                <div class="username">
+                    Username: {{ resident.user.username }} &middot; Joined {{ resident.user.date_joined|date:"M d, Y" }}
+                </div>
+                <div class="details">
+                    <div class="detail wide">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>{{ resident.address }}</span>
+                    </div>
+                    <div class="detail">
+                        <i class="fa-solid fa-phone"></i>
+                        {% if resident.contact_number %}
+                        <span>{{ resident.contact_number }}</span>
+                        {% else %}
+                        <span class="muted">No contact number</span>
+                        {% endif %}
+                    </div>
+                    <div class="detail">
+                        <i class="fa-solid fa-envelope"></i>
+                        {% if resident.user.email %}
+                        <span>{{ resident.user.email }}</span>
+                        {% else %}
+                        <span class="muted">No email on file</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty">
+                <i class="fa-solid fa-users"></i>
+                {% if query %}
+                No residents match &ldquo;{{ query }}&rdquo;. Try a different name or clear the search.
+                {% else %}
+                No approved residents yet. They appear here after you approve their sign-up.
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </body>
+</html>

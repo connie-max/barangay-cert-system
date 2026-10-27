@@ -21,6 +21,7 @@ urlpatterns = [
     path('pending-accounts/', certificates_views.pending_accounts, name='pending_accounts'),
     path('pending-accounts/<int:user_id>/approve/', certificates_views.approve_account, name='approve_account'),
     path('pending-accounts/<int:user_id>/reject/', certificates_views.reject_account, name='reject_account'),
+            path('residents/', certificates_views.residents_list, name='residents_list'),
     # Staff-only report of recorded payments (OR numbers) to pass to the higher-ups.
     path('collections-report/', certificates_views.collections_report, name='collections_report'),
     path('collections-report/download.xlsx', certificates_views.collections_report_xlsx, name='collections_report_xlsx'),
