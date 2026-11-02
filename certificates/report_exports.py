@@ -7,6 +7,7 @@ This file knows nothing about Django. The views hand it plain data:
     start, end = datetime.date
 so the same numbers shown on screen end up in both files.
 """
+import os
 from decimal import Decimal
 from io import BytesIO
 from xml.sax.saxutils import escape
@@ -20,7 +21,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from reportlab.platypus import (
-    KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+    Image, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
 )
 
 # ---------------------------------------------------------------------------
@@ -37,8 +38,10 @@ HEADER_LINES = [
 # Leave a name as "" to leave the line blank for hand-signing.
 PREPARED_BY_NAME = ""
 PREPARED_BY_TITLE = ""
-NOTED_BY_NAME = ""
-NOTED_BY_TITLE = ""
+
+# The barangay seal printed at the top of the PDF (skipped if the file is missing).
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "static", "certificates", "brgy_sasa_logo.jpg")
+PROVINCE_LOGO_PATH = os.path.join(os.path.dirname(__file__), "static", "certificates", "davao_de_oro_logo.png")
 
 COLUMNS = ["Date", "OR No.", "Payor", "Nature of Collection", "Amount"]
 BLUE = "2A5298"
@@ -53,6 +56,11 @@ def period_text(start, end):
 
 def short_date(d):
     return f"{d.strftime('%b')} {d.day:02d}, {d.year}"
+
+
+def stamp(dt):
+    """'Oct 27, 2026, 8:32 PM' (12-hour clock, no leading zero, works on Windows too)."""
+    return f"{short_date(dt)}, {dt.strftime('%I:%M %p').lstrip('0')}"
 
 
 def money(value):
@@ -127,13 +135,10 @@ def build_xlsx(rows, start, end):
 
     # Signature lines
     ws.cell(row=r, column=1, value="Prepared by:").font = Font(bold=True)
-    ws.cell(row=r, column=4, value="Noted by:").font = Font(bold=True)
     r += 3
     ws.cell(row=r, column=1, value=PREPARED_BY_NAME or "______________________")
-    ws.cell(row=r, column=4, value=NOTED_BY_NAME or "______________________")
     r += 1
     ws.cell(row=r, column=1, value=PREPARED_BY_TITLE)
-    ws.cell(row=r, column=4, value=NOTED_BY_TITLE)
 
     # Widths, frozen headings, print setup
     for col, width in zip("ABCDE", (16, 18, 30, 30, 16)):
@@ -153,7 +158,7 @@ def build_xlsx(rows, start, end):
 # ---------------------------------------------------------------------------
 # PDF
 # ---------------------------------------------------------------------------
-def build_pdf(rows, start, end, generated_on):
+def build_pdf(rows, start, end, generated_on, prepared_by="", generated_at=None):
     buf = BytesIO()
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
@@ -173,9 +178,27 @@ def build_pdf(rows, start, end, generated_on):
     small = ParagraphStyle("s", parent=cell, fontSize=9, leading=12)
 
     story = []
+    header_cells = []
     for i, line in enumerate(HEADER_LINES):
         last = i == len(HEADER_LINES) - 1
-        story.append(Paragraph(escape(line), center_bold if last else center))
+        header_cells.append(Paragraph(escape(line), center_bold if last else center))
+    if os.path.exists(LOGO_PATH):
+        left_logo = Image(LOGO_PATH, width=32 * mm, height=32 * mm)
+        right_logo = ""
+        if os.path.exists(PROVINCE_LOGO_PATH):
+            right_logo = Image(PROVINCE_LOGO_PATH, width=32 * mm, height=32 * mm, mask="auto")
+        header = Table(
+            [[left_logo, header_cells, right_logo]],
+            colWidths=[38 * mm, 98 * mm, 38 * mm],
+        )
+        header.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("ALIGN", (0, 0), (0, 0), "LEFT"),
+            ("ALIGN", (2, 0), (2, 0), "RIGHT"),
+        ]))
+        story.append(header)
+    else:
+        story.extend(header_cells)
     story.append(Paragraph("COLLECTIONS REPORT", title))
     story.append(Paragraph(escape(period_text(start, end)), center))
     story.append(Spacer(1, 8 * mm))
@@ -217,17 +240,18 @@ def build_pdf(rows, start, end, generated_on):
     # Signature block (kept together so it never splits across two pages)
     sig = Table(
         [
-            [Paragraph("Prepared by:", bold), "", Paragraph("Noted by:", bold)],
-            ["", "", ""],
-            [Paragraph(escape(PREPARED_BY_NAME), center), "", Paragraph(escape(NOTED_BY_NAME), center)],
-            [Paragraph(escape(PREPARED_BY_TITLE), center), "", Paragraph(escape(NOTED_BY_TITLE), center)],
+            [Paragraph("Prepared by:", bold)],
+            [""],
+            [Paragraph(escape(PREPARED_BY_NAME or prepared_by), center)],
+            [Paragraph(escape(PREPARED_BY_TITLE), center)],
         ],
-        colWidths=[70 * mm, 34 * mm, 70 * mm],
+        colWidths=[70 * mm],
+        hAlign="LEFT",
         rowHeights=[6 * mm, 16 * mm, None, None],
     )
     sig.setStyle(TableStyle([
         ("LINEABOVE", (0, 2), (0, 2), 0.8, colors.black),
-        ("LINEABOVE", (2, 2), (2, 2), 0.8, colors.black),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("TOPPADDING", (0, 2), (-1, 2), 3),
     ]))
     story.append(Spacer(1, 12 * mm))
@@ -237,7 +261,9 @@ def build_pdf(rows, start, end, generated_on):
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor("#777777"))
-        canvas.drawString(18 * mm, 10 * mm, f"Generated {short_date(generated_on)}")
+        when = stamp(generated_at) if generated_at else short_date(generated_on)
+        by = f" by {prepared_by}" if prepared_by else ""
+        canvas.drawString(18 * mm, 10 * mm, f"Generated {when}{by}")
         canvas.drawRightString(A4[0] - 18 * mm, 10 * mm, f"Page {doc_.page}")
         canvas.restoreState()
 

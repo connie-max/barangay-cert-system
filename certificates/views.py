@@ -402,7 +402,11 @@ def collections_report_xlsx(request):
 def collections_report_pdf(request):
     period, start, end, error = get_collections_period(request)
     rows = _report_rows_as_plain_data(start, end)
-    content = report_exports.build_pdf(rows, start, end, timezone.localdate())
+    prepared_by = request.user.get_full_name() or request.user.username
+    content = report_exports.build_pdf(
+        rows, start, end, timezone.localdate(),
+        prepared_by=prepared_by, generated_at=timezone.localtime(),
+    )
     return _download_response(
         content,
         'application/pdf',
