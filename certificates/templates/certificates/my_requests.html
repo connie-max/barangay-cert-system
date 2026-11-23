@@ -73,12 +73,12 @@
             .request-item .type {
                 font-weight: 600;
                 color: #1a1a2e;
-                font-size: 14px;
+                font-size: 17px;
             }
 
             .request-item .meta {
-                font-size: 12px;
-                color: #999;
+                font-size: 15px;
+                color: #000000;
                 margin-top: 4px;
             }
 
@@ -86,7 +86,7 @@
                 display: inline-block;
                 padding: 4px 12px;
                 border-radius: 20px;
-                font-size: 11px;
+                font-size: 14px;
                 font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: 0.3px;
@@ -111,8 +111,8 @@
 
             .empty {
                 text-align: center;
-                color: #aaa;
-                font-size: 14px;
+                color: #000000;
+                font-size: 17px;
                 padding: 30px 0;
             }
 
@@ -120,7 +120,7 @@
                 font-size: 32px;
                 display: block;
                 margin-bottom: 12px;
-                color: #ddd;
+                color: #000000;
             }
 
             .links {
@@ -134,7 +134,7 @@
             .links a {
                 color: #2a5298;
                 text-decoration: none;
-                font-size: 13px;
+                font-size: 16px;
                 font-weight: 500;
             }
 
@@ -154,7 +154,7 @@
                 padding: 0;
                 cursor: pointer;
                 font-family: 'Poppins', sans-serif;
-                font-size: 12px;
+                font-size: 15px;
                 font-weight: 600;
                 color: #b71c1c;
             }
@@ -170,8 +170,10 @@
                 <div>
                     <div class="type">{{ req.certificate_type }}</div>
                     <div class="meta">Requested {{ req.date_requested|date:"M d, Y" }}</div>
+                    <div class="meta">Fee: &#8369;{{ req.fee }}</div>
+                    {% include 'certificates/_cedula_details.html' %}
                     {% if req.status == 'ready_for_pickup' %}
-                    <div style="font-size: 12px; color: #155724; font-weight: 600; margin-top: 6px;">
+                    <div style="font-size: 15px; color: #155724; font-weight: 600; margin-top: 6px;">
                         <i class="fa-solid fa-box-open"></i> Ready for pickup at the barangay hall
                     </div>
                     {% endif %}

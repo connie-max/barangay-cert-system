@@ -4,9 +4,23 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-# Every certificate costs the same fixed amount, so it lives in ONE place.
-# If the barangay ever changes the fee, change it here only.
+# Every certificate except Cedula costs the same fixed amount, so it lives
+# in ONE place. If the barangay ever changes the fee, change it here only.
 CERTIFICATE_FEE = Decimal('50.00')
+
+# A Cedula (Community Tax Certificate) is priced differently: it follows
+# the Local Government Code, not the flat P50. The price is a P5.00 basic
+# tax, plus P1.00 for every P1,000 of the resident's annual income (whole
+# thousands only). Example: P120,000 income -> P5 + P120 = P125.
+CEDULA_BASIC_FEE = Decimal('5.00')
+CEDULA_PER_THOUSAND = Decimal('1.00')
+
+
+def cedula_fee(annual_income):
+    # annual_income may be None (not a Cedula request): the basic P5 only.
+    income = annual_income or 0
+    whole_thousands = int(income // 1000)
+    return CEDULA_BASIC_FEE + CEDULA_PER_THOUSAND * whole_thousands
 
 CERTIFICATE_REQUIREMENTS = {
     "Certificate of Residency": ["Valid ID"],
@@ -27,6 +41,27 @@ CERTIFICATE_TEXT_FIELDS = {
         "label": "Name of Financing/Loan Company",
     },
 }
+
+# A Cedula (Community Tax Certificate) needs no valid ID, but the paper
+# cedula itself is printed with the resident's personal details, so the
+# resident must type them in when requesting one. Name and address already
+# come from the resident's account, so they are not listed here.
+CIVIL_STATUS_CHOICES = [
+    ('Single', 'Single'),
+    ('Married', 'Married'),
+    ('Widowed', 'Widowed'),
+    ('Separated', 'Separated'),
+]
+
+# (field name on CertificateRequest, label shown on the form)
+CEDULA_FIELDS = [
+    ("occupation", "Occupation / Work"),
+    ("civil_status", "Civil Status"),
+    ("date_of_birth", "Date of Birth"),
+    ("place_of_birth", "Place of Birth"),
+    ("citizenship", "Citizenship"),
+    ("tin", "TIN (Tax Identification Number)"),
+]
 
 class CertificateType(models.Model):
     name = models.CharField(max_length=100)
@@ -69,6 +104,19 @@ class CertificateRequest(models.Model):
     date_requested = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
+    # --- Personal details for a Cedula (ma'am's feedback) ---
+    # A cedula is printed with these details, so the resident types them in
+    # when requesting one. They stay blank for every other certificate type.
+    occupation = models.CharField("Occupation / Work", max_length=100, blank=True)
+    civil_status = models.CharField("Civil Status", max_length=20, blank=True, choices=CIVIL_STATUS_CHOICES)
+    date_of_birth = models.DateField("Date of Birth", null=True, blank=True)
+    place_of_birth = models.CharField("Place of Birth", max_length=150, blank=True)
+    citizenship = models.CharField("Citizenship", max_length=60, blank=True)
+    tin = models.CharField("TIN (Tax Identification Number)", max_length=20, blank=True)
+    # Annual income is only used for a Cedula: it sets the Cedula fee
+    # (P5 + P1 per P1,000 of income). It stays blank for other requests.
+    annual_income = models.DecimalField("Annual Income", max_digits=12, decimal_places=2, null=True, blank=True)
+
     # --- Collections record (filled in when staff click "Mark as Paid") ---
     # The barangay's paper Official Receipt is still the legal document;
     # these fields only RECORD it so the Collections Report can list it.
@@ -87,6 +135,14 @@ class CertificateRequest(models.Model):
     @property
     def days_waiting(self):
         return (timezone.now() - self.date_requested).days
+
+    @property
+    def fee(self):
+        # How much this request costs. A Cedula is priced from the
+        # resident's annual income; every other certificate is the flat P50.
+        if self.certificate_type and self.certificate_type.name == 'Cedula':
+            return cedula_fee(self.annual_income)
+        return CERTIFICATE_FEE
 
     @property
     def days_since_approved(self):

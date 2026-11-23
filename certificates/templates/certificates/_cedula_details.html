@@ -1,0 +1,16 @@
+{# Details the resident typed in for a Cedula. Staff need them to check the #}
+{# request and to fill in the paper cedula, so this is shown everywhere a #}
+{# request is listed. It shows nothing for other certificate types. #}
+{% if req.certificate_type.name == 'Cedula' %}
+<div style="font-size: 18px; color: #000; margin-top: 8px; line-height: 1.7;">
+    <strong>Details for Cedula:</strong><br>
+    Occupation: <strong>{{ req.occupation }}</strong><br>
+    Civil status: <strong>{{ req.civil_status }}</strong><br>
+    Date of birth: <strong>{{ req.date_of_birth|date:"M d, Y" }}</strong><br>
+    Place of birth: <strong>{{ req.place_of_birth }}</strong><br>
+    Citizenship: <strong>{{ req.citizenship }}</strong><br>
+    TIN: <strong>{{ req.tin }}</strong><br>
+    Annual income: <strong>&#8369;{{ req.annual_income }}</strong><br>
+    Cedula fee: <strong>&#8369;{{ req.fee }}</strong>
+</div>
+{% endif %}

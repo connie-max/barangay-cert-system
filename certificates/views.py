@@ -10,7 +10,7 @@ from django.http import Http404, FileResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .forms import CertificateRequestForm, ResidentSignUpForm
-from .models import Resident, CertificateRequest, RequestAttachment, CERTIFICATE_REQUIREMENTS, CERTIFICATE_FEE
+from .models import Resident, CertificateRequest, RequestAttachment, CERTIFICATE_REQUIREMENTS
 from . import report_exports
 from . import notifications
 
@@ -221,7 +221,6 @@ def build_manage_context():
         'requests': pending,
         'awaiting_payment': awaiting_payment,
         'ready_to_release': ready_to_release,
-        'certificate_fee': CERTIFICATE_FEE,
     }
 
 @user_passes_test(is_staff_user)
@@ -278,7 +277,9 @@ def mark_as_paid(request, request_id):
 
     cert_request.payment_status = 'paid'
     cert_request.or_number = or_number
-    cert_request.amount_paid = CERTIFICATE_FEE
+    # The amount recorded is this request's own fee: a Cedula costs what
+    # its income says (P5 + P1 per P1,000), every other certificate is P50.
+    cert_request.amount_paid = cert_request.fee
     cert_request.date_paid = timezone.now()
     cert_request.confirmed_by = request.user
     cert_request.save()
@@ -412,6 +413,14 @@ def collections_report_pdf(request):
         'application/pdf',
         f'collections_report_{start.isoformat()}_to_{end.isoformat()}.pdf',
     )
+
+
+    full_name = (request.POST.get('full_name') or '').strip()
+    parts = full_name.split(None, 1)  # first word is the first name, the rest is the last name
+    request.user.first_name = parts[0] if parts else ''
+    request.user.last_name = parts[1] if len(parts) > 1 else ''
+    request.user.save(update_fields=['first_name', 'last_name'])
+    return redirect('collections_report')
 
 @user_passes_test(is_staff_user)
 def pending_accounts(request):

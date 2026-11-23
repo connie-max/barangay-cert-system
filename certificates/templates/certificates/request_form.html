@@ -65,8 +65,8 @@
 
             form label {
                 display: block;
-                font-size: 12px;
-                color: #444;
+                font-size: 15px;
+                color: #000000;
                 margin-bottom: 6px;
                 font-weight: 600;
                 text-transform: uppercase;
@@ -79,7 +79,7 @@
                 padding: 12px 14px;
                 border: 1.5px solid #e5e5e5;
                 border-radius: 10px;
-                font-size: 14px;
+                font-size: 17px;
                 font-family: 'Poppins', sans-serif;
                 background: white;
                 transition: border-color 0.2s;
@@ -98,7 +98,7 @@
                 color: white;
                 border: none;
                 border-radius: 10px;
-                font-size: 15px;
+                font-size: 18px;
                 font-weight: 600;
                 font-family: 'Poppins', sans-serif;
                 cursor: pointer;
@@ -121,12 +121,17 @@
             .links a {
                 color: #2a5298;
                 text-decoration: none;
-                font-size: 13px;
+                font-size: 16px;
                 font-weight: 500;
             }
 
             .links a:hover {
                 text-decoration: underline;
+            }
+            /* Example text inside empty boxes is black too, so it is easy to read. */
+            input::placeholder, textarea::placeholder {
+                color: #000;
+                opacity: 1;
             }
         </style>
     </head>
@@ -139,6 +144,72 @@
                 {% csrf_token %} {{ form.as_p }}
                 <button type="submit">Submit Request</button>
             </form>
+
+            <script>
+                // Same idea as home.html: the form holds the extra fields, but
+                // they only show when their certificate type is picked.
+                // Financing company shows for a Loan, personal details for a Cedula.
+                (function () {
+                    var CEDULA_FIELDS = ["occupation", "civil_status", "date_of_birth", "place_of_birth", "citizenship", "tin", "annual_income"];
+                    var select = document.querySelector('select[name="certificate_type"]');
+                    if (!select) return;
+                    function row(name) {
+                        var input = document.querySelector('[name="' + name + '"]');
+                        return input ? input.closest('p') : null;
+                    }
+                    function toggle() {
+                        var picked = select.options[select.selectedIndex]
+                            ? select.options[select.selectedIndex].text.trim()
+                            : '';
+                        var loanRow = row('financing_company');
+                        if (loanRow) {
+                            loanRow.style.display = picked === "Certificate of Loan" ? "" : "none";
+                            if (picked !== "Certificate of Loan") loanRow.querySelector('input').value = "";
+                        }
+                        CEDULA_FIELDS.forEach(function (name) {
+                            var r = row(name);
+                            if (!r) return;
+                            r.style.display = picked === "Cedula" ? "" : "none";
+                            if (picked !== "Cedula") {
+                                var input = r.querySelector('input, select');
+                                if (input) input.value = "";
+                            }
+                        });
+                    }
+                    // The Cedula fee follows the annual income (P5 + P1 for
+                    // every P1,000), so show it live while they type it in.
+                    function updateFee() {
+                        var feeLine = document.getElementById('feeLine');
+                        if (!feeLine) {
+                            feeLine = document.createElement('div');
+                            feeLine.id = 'feeLine';
+                            feeLine.style.cssText = 'font-weight: 700; color: #000; margin: 12px 0;';
+                            var submitBtn = document.querySelector('form button[type="submit"]');
+                            if (submitBtn) submitBtn.parentNode.insertBefore(feeLine, submitBtn);
+                        }
+                        var picked = select.options[select.selectedIndex]
+                            ? select.options[select.selectedIndex].text.trim()
+                            : '';
+                        if (picked === "Cedula") {
+                            var incomeInput = document.querySelector('[name="annual_income"]');
+                            var income = incomeInput ? parseFloat(incomeInput.value) || 0 : 0;
+                            var fee = 5 + Math.floor(income / 1000);
+                            feeLine.textContent = 'Cedula fee: ₱' + fee + '.00 (P5 + P1 for every P1,000 of annual income)';
+                            feeLine.style.display = '';
+                        } else if (picked) {
+                            feeLine.textContent = 'Fee: ₱50.00';
+                            feeLine.style.display = '';
+                        } else {
+                            feeLine.style.display = 'none';
+                        }
+                    }
+                    var incomeInput = document.querySelector('[name="annual_income"]');
+                    if (incomeInput) incomeInput.addEventListener('input', updateFee);
+                    select.addEventListener('change', function () { toggle(); updateFee(); });
+                    toggle();
+                    updateFee();
+                })();
+            </script>
 
             <div class="links">
                 <a href="{% url 'my_requests' %}"
