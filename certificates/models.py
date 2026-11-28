@@ -11,16 +11,56 @@ CERTIFICATE_FEE = Decimal('50.00')
 # A Cedula (Community Tax Certificate) is priced differently: it follows
 # the Local Government Code, not the flat P50. The price is a P5.00 basic
 # tax, plus P1.00 for every P1,000 of the resident's annual income (whole
-# thousands only). Example: P120,000 income -> P5 + P120 = P125.
+# thousands only). The extra tax for income never goes past P5,000, so the
+# most anyone pays before interest is P5,005.
+# The tax is due by the last day of February. From March onwards, the law
+# (RA 7160, Sec. 161) adds 2% interest for every month (or part of a
+# month) it is late, until it is paid. Example: P120,000 income in
+# November -> base P5 + P120 = P125, 9 months late x 2% = P22.50,
+# total P147.50.
 CEDULA_BASIC_FEE = Decimal('5.00')
 CEDULA_PER_THOUSAND = Decimal('1.00')
+CEDULA_MAX_ADDITIONAL = Decimal('5000.00')
+CEDULA_LATE_RATE = Decimal('0.02')  # 2% per month late
 
 
-def cedula_fee(annual_income):
-    # annual_income may be None (not a Cedula request): the basic P5 only.
+def cedula_months_late(on_date=None):
+    # How many months late the Cedula tax is, against the February
+    # deadline of the same year. January and February are never late.
+    # March is 1 month late, April is 2, ... November is 9, December is 10.
+    # A part of a month counts as a whole month.
+    if on_date is None:
+        on_date = timezone.localdate()
+    if on_date.month <= 2:
+        return 0
+    return on_date.month - 2
+
+
+def cedula_fee_breakdown(annual_income, on_date=None):
+    # The "why" behind the fee, so the pages can show the working:
+    # base, months late, interest, and total.
     income = annual_income or 0
     whole_thousands = int(income // 1000)
-    return CEDULA_BASIC_FEE + CEDULA_PER_THOUSAND * whole_thousands
+    additional = CEDULA_PER_THOUSAND * whole_thousands
+    if additional > CEDULA_MAX_ADDITIONAL:
+        additional = CEDULA_MAX_ADDITIONAL
+    base = CEDULA_BASIC_FEE + additional
+    months = cedula_months_late(on_date)
+    interest = (base * CEDULA_LATE_RATE * months).quantize(Decimal('0.01'))
+    return {
+        'base': base,
+        'additional': additional,
+        'months_late': months,
+        'interest': interest,
+        'total': base + interest,
+    }
+
+
+def cedula_fee(annual_income, on_date=None):
+    # The full Cedula fee on a given date (base + late interest).
+    # annual_income may be None (not a Cedula request): the basic P5 only.
+    # No date given means today.
+    return cedula_fee_breakdown(annual_income, on_date=on_date)['total']
 
 CERTIFICATE_REQUIREMENTS = {
     "Certificate of Residency": ["Valid ID"],
@@ -140,9 +180,47 @@ class CertificateRequest(models.Model):
     def fee(self):
         # How much this request costs. A Cedula is priced from the
         # resident's annual income; every other certificate is the flat P50.
+        # The price is set on the day the resident requests it, so it never
+        # changes after that (a late request already has its interest in it).
         if self.certificate_type and self.certificate_type.name == 'Cedula':
-            return cedula_fee(self.annual_income)
+            return cedula_fee(self.annual_income, on_date=self._fee_date())
         return CERTIFICATE_FEE
+
+    @property
+    def fee_breakdown(self):
+        # The "why" behind the Cedula fee: base, months late, interest,
+        # total. Only for a Cedula; every other certificate has none.
+        if self.certificate_type and self.certificate_type.name == 'Cedula':
+            return cedula_fee_breakdown(self.annual_income, on_date=self._fee_date())
+        return None
+
+    @property
+    def fee_breakdown_text(self):
+        # One plain line that says why the Cedula fee is what it is, for
+        # the payment popup. Example: "P5 basic + P120 income = P125,
+        # plus 9 months late x 2% (P22.50)".
+        breakdown = self.fee_breakdown
+        if not breakdown:
+            return ''
+        line = (
+            f"P5 basic + P{breakdown['additional']} for income"
+            f" = P{breakdown['base']}"
+        )
+        if breakdown['months_late']:
+            line += (
+                f", plus {breakdown['months_late']} months late x 2%"
+                f" (P{breakdown['interest']})"
+            )
+        else:
+            line += ", no late interest"
+        return line
+
+    def _fee_date(self):
+        # The date the fee is worked out from: the day the request was
+        # made. A request that is not saved yet has no date, so use today.
+        if self.date_requested:
+            return timezone.localdate(self.date_requested)
+        return timezone.localdate()
 
     @property
     def days_since_approved(self):

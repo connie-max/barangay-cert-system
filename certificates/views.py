@@ -278,7 +278,8 @@ def mark_as_paid(request, request_id):
     cert_request.payment_status = 'paid'
     cert_request.or_number = or_number
     # The amount recorded is this request's own fee: a Cedula costs what
-    # its income says (P5 + P1 per P1,000), every other certificate is P50.
+    # its income says (P5 + P1 per P1,000, plus 2% per month late after
+    # February), every other certificate is P50.
     cert_request.amount_paid = cert_request.fee
     cert_request.date_paid = timezone.now()
     cert_request.confirmed_by = request.user

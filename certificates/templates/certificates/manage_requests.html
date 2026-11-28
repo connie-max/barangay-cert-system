@@ -676,7 +676,7 @@
                         <button
                             type="button"
                             class="btn btn-paid"
-                            onclick="openPaidModal('{% url 'mark_as_paid' req.id %}', '{{ req.resident|escapejs }}', '{{ req.certificate_type|escapejs }}', '{{ req.fee }}')"
+                            onclick="openPaidModal('{% url 'mark_as_paid' req.id %}', '{{ req.resident|escapejs }}', '{{ req.certificate_type|escapejs }}', '{{ req.fee }}', '{{ req.fee_breakdown_text|escapejs }}')"
                         >
                             Mark as Paid
                         </button>
@@ -762,6 +762,7 @@
                         <span>Amount received</span>
                         <strong id="paidAmountValue">&#8369;50.00</strong>
                     </div>
+                    <div class="paid-hint" id="paidWhyLine" style="display: none;"></div>
                     <div class="paid-actions">
                         <button type="button" class="btn btn-cancel" onclick="closePaidModal()">Cancel</button>
                         <button type="submit" class="btn btn-confirm">Confirm Payment</button>
@@ -790,13 +791,23 @@
                 document.getElementById('imageLightboxOverlay').classList.remove('active');
                 document.getElementById('lightboxImage').src = '';
             }
-            function openPaidModal(actionUrl, residentName, certName, fee) {
+            function openPaidModal(actionUrl, residentName, certName, fee, feeWhy) {
                 var form = document.getElementById('paidForm');
                 form.setAttribute('action', actionUrl);
                 form.querySelector('button[type=submit]').disabled = false;
                 // The amount shown is this request's own fee: a Cedula costs
                 // what its income says, every other certificate is P50.
                 document.getElementById('paidAmountValue').textContent = '₱' + fee;
+                // The reason why, for a Cedula (base + late interest). Other
+                // certificates have no reason line, so keep it hidden.
+                var whyLine = document.getElementById('paidWhyLine');
+                if (feeWhy) {
+                    whyLine.textContent = feeWhy;
+                    whyLine.style.display = '';
+                } else {
+                    whyLine.textContent = '';
+                    whyLine.style.display = 'none';
+                }
                 document.getElementById('paidWho').textContent = certName + ' \u2014 ' + residentName;
                 document.getElementById('orNumberInput').value = '';
                 document.getElementById('paidModalOverlay').classList.add('active');

@@ -11,6 +11,7 @@
     Citizenship: <strong>{{ req.citizenship }}</strong><br>
     TIN: <strong>{{ req.tin }}</strong><br>
     Annual income: <strong>&#8369;{{ req.annual_income }}</strong><br>
-    Cedula fee: <strong>&#8369;{{ req.fee }}</strong>
+    Cedula fee: <strong>&#8369;{{ req.fee }}</strong><br>
+    <span style="font-size: 16px;">P5 basic + &#8369;{{ req.fee_breakdown.additional }} for income = &#8369;{{ req.fee_breakdown.base }}{% if req.fee_breakdown.months_late %}, plus {{ req.fee_breakdown.months_late }} months late x 2% (&#8369;{{ req.fee_breakdown.interest }}){% else %}, no late interest{% endif %}</span>
 </div>
 {% endif %}

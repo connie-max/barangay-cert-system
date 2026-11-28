@@ -1313,7 +1313,9 @@
             }
 
             // The Cedula fee follows the resident's annual income (P5 + P1
-            // for every P1,000), so show it live while they type it in.
+            // for every P1,000, capped at P5,005), plus 2% interest for
+            // every month late after February, so show it live while they
+            // type it in, with the reason why.
             function updateFeeLine(selectedText) {
                 var feeLine = document.getElementById('feeLine');
                 if (!feeLine) {
@@ -1326,8 +1328,20 @@
                 if (selectedText === "Cedula") {
                     var incomeInput = document.querySelector('#certRequestForm [name="annual_income"]');
                     var income = incomeInput ? parseFloat(incomeInput.value) || 0 : 0;
-                    var fee = 5 + Math.floor(income / 1000);
-                    feeLine.textContent = 'Cedula fee: ₱' + fee + '.00 (P5 + P1 for every P1,000 of annual income)';
+                    var base = 5 + Math.floor(income / 1000);
+                    if (base > 5005) base = 5005;
+                    // The tax is due by the last day of February. From
+                    // March onwards, add 2% for every month (or part of
+                    // a month) it is late.
+                    var monthNow = new Date().getMonth() + 1;
+                    var monthsLate = monthNow <= 2 ? 0 : monthNow - 2;
+                    var interest = base * 0.02 * monthsLate;
+                    var total = base + interest;
+                    if (monthsLate > 0) {
+                        feeLine.textContent = 'Cedula fee: ₱' + total.toFixed(2) + ' (P5 basic + P' + (base - 5) + ' for income, plus ' + monthsLate + ' months late x 2% = ₱' + interest.toFixed(2) + ')';
+                    } else {
+                        feeLine.textContent = 'Cedula fee: ₱' + total.toFixed(2) + ' (P5 + P1 for every P1,000 of annual income)';
+                    }
                     feeLine.style.display = '';
                 } else if (selectedText) {
                     feeLine.textContent = 'Fee: ₱50.00';
